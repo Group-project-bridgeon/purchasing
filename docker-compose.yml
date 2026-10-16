@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: purchasing-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: purchasing
+    ports:
+      - "5433:5432"
+    volumes:
+      - purchasing_pgdata:/var/lib/postgresql/data
+
+volumes:
+  purchasing_pgdata:
