@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/shopspring/decimal"
+)
 
 type PurchaseRequestStatus string
 
@@ -35,9 +39,10 @@ type PurchaseRequestItem struct {
 	PurchaseRequestID string
 	ItemID            string
 
-	Description        string
-	Quantity           float64
-	EstimatedUnitPrice *float64
+	Description string
+
+	Quantity           decimal.Decimal
+	EstimatedUnitPrice *decimal.Decimal
 
 	CreatedAt time.Time
 }
