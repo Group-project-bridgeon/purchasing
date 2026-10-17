@@ -18,6 +18,7 @@ func NewPurchaseRequestHandler(
 		service: service,
 	}
 }
+
 func (h *PurchaseRequestHandler) Create(c *fiber.Ctx) error {
 	var body dto.CreatePurchaseRequestBody
 
@@ -54,49 +55,41 @@ func (h *PurchaseRequestHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	itemResponses := make(
-		[]dto.PurchaseRequestItemResponse,
-		0,
-		len(items),
+	response := helper.ToPurchaseRequestResponse(
+		request,
+		items,
 	)
 
-	for _, item := range items {
-		var estimatedUnitPrice *string
-
-		if item.EstimatedUnitPrice != nil {
-			value := item.EstimatedUnitPrice.String()
-			estimatedUnitPrice = &value
-		}
-
-		itemResponses = append(
-			itemResponses,
-			dto.PurchaseRequestItemResponse{
-				ID:                 item.ID,
-				PurchaseRequestID:  item.PurchaseRequestID,
-				ItemID:             item.ItemID,
-				Description:        item.Description,
-				Quantity:           item.Quantity.String(),
-				EstimatedUnitPrice: estimatedUnitPrice,
-			},
-		)
-	}
-
-	response := dto.CreatePurchaseRequestResponse{
-		PurchaseRequest: dto.PurchaseRequestResponse{
-			ID:            request.ID,
-			RequestNumber: request.RequestNumber,
-			RequestedBy:   request.RequestedBy,
-			DepartmentID:  request.DepartmentID,
-			Status:        request.Status,
-			RequestedAt:   request.RequestedAt,
-			RequiredBy:    request.RequiredBy,
-			Purpose:       request.Purpose,
-			Notes:         request.Notes,
-			CreatedAt:     request.CreatedAt,
-			UpdatedAt:     request.UpdatedAt,
-		},
-		Items: itemResponses,
-	}
-
 	return c.Status(fiber.StatusCreated).JSON(response)
+}
+
+func (h *PurchaseRequestHandler) GetByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	request, err := h.service.GetPurchaseRequestByID(
+		c.UserContext(),
+		id,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	items, err := h.service.GetPurchaseRequestItems(
+		c.UserContext(),
+		request.ID,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get purchase request items",
+		})
+	}
+
+	response := helper.ToPurchaseRequestResponse(
+		request,
+		items,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(response)
 }

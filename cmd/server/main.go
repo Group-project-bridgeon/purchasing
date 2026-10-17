@@ -63,6 +63,15 @@ func main() {
 		"/api/v1/purchase-requests",
 		purchaseRequestHandler.Create,
 	)
+	app.Post(
+		"/api/v1/purchase-requests",
+		purchaseRequestHandler.Create,
+	)
+
+	app.Get(
+		"/api/v1/purchase-requests/:id",
+		purchaseRequestHandler.GetByID,
+	)
 
 	// Start server.
 	log.Printf(

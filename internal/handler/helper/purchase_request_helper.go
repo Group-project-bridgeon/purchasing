@@ -93,3 +93,52 @@ func ParseCreatePurchaseRequest(
 		Items:   items,
 	}, nil
 }
+
+func ToPurchaseRequestResponse(
+	request *domain.PurchaseRequest,
+	items []*domain.PurchaseRequestItem,
+) dto.CreatePurchaseRequestResponse {
+	itemResponses := make(
+		[]dto.PurchaseRequestItemResponse,
+		0,
+		len(items),
+	)
+
+	for _, item := range items {
+		var estimatedUnitPrice *string
+
+		if item.EstimatedUnitPrice != nil {
+			value := item.EstimatedUnitPrice.String()
+			estimatedUnitPrice = &value
+		}
+
+		itemResponses = append(
+			itemResponses,
+			dto.PurchaseRequestItemResponse{
+				ID:                 item.ID,
+				PurchaseRequestID:  item.PurchaseRequestID,
+				ItemID:             item.ItemID,
+				Description:        item.Description,
+				Quantity:           item.Quantity.String(),
+				EstimatedUnitPrice: estimatedUnitPrice,
+			},
+		)
+	}
+
+	return dto.CreatePurchaseRequestResponse{
+		PurchaseRequest: dto.PurchaseRequestResponse{
+			ID:            request.ID,
+			RequestNumber: request.RequestNumber,
+			RequestedBy:   request.RequestedBy,
+			DepartmentID:  request.DepartmentID,
+			Status:        request.Status,
+			RequestedAt:   request.RequestedAt,
+			RequiredBy:    request.RequiredBy,
+			Purpose:       request.Purpose,
+			Notes:          request.Notes,
+			CreatedAt:     request.CreatedAt,
+			UpdatedAt:     request.UpdatedAt,
+		},
+		Items: itemResponses,
+	}
+}
