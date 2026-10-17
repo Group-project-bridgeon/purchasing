@@ -49,3 +49,22 @@ type CreatePurchaseRequestResponse struct {
 	PurchaseRequest PurchaseRequestResponse       `json:"purchase_request"`
 	Items           []PurchaseRequestItemResponse `json:"items"`
 }
+
+type ListPurchaseRequestsResponse struct {
+	PurchaseRequests []PurchaseRequestResponse `json:"purchase_requests"`
+	Limit            int                       `json:"limit"`
+	Offset           int                       `json:"offset"`
+}
+
+type UpdatePurchaseRequestBody struct {
+	RequiredBy *string `json:"required_by"`
+	Purpose    string  `json:"purpose"`
+	Notes      *string `json:"notes"`
+}
+
+type UpdatePurchaseRequestItemBody struct {
+    ItemID             string  `json:"item_id"`
+    Description        string  `json:"description"`
+    Quantity           string  `json:"quantity"`
+    EstimatedUnitPrice *string `json:"estimated_unit_price"`
+}

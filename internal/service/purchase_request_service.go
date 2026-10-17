@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
+	"github.com/jackc/pgx/v5"
 )
 
 const purchaseRequestDocumentType = "purchase_request"
@@ -69,6 +72,16 @@ type PurchaseRequestService interface {
 		ctx context.Context,
 		purchaseRequestID string,
 	) ([]*domain.PurchaseRequestItem, error)
+
+	UpdatePurchaseRequestItem(
+		ctx context.Context,
+		item *domain.PurchaseRequestItem,
+	) (*domain.PurchaseRequestItem, error)
+
+	DeletePurchaseRequestItem(
+		ctx context.Context,
+		id string,
+	) error
 }
 
 type purchaseRequestService struct {
@@ -305,21 +318,48 @@ func (s *purchaseRequestService) SubmitPurchaseRequest(
 	ctx context.Context,
 	id string,
 ) (*domain.PurchaseRequest, error) {
-	return s.repository.SubmitPurchaseRequest(ctx, id)
+	request, err := s.repository.SubmitPurchaseRequest(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrPurchaseRequestCannotSubmit
+		}
+
+		return nil, fmt.Errorf("submit purchase request: %w", err)
+	}
+
+	return request, nil
 }
 
 func (s *purchaseRequestService) ApprovePurchaseRequest(
 	ctx context.Context,
 	id string,
 ) (*domain.PurchaseRequest, error) {
-	return s.repository.ApprovePurchaseRequest(ctx, id)
+	request, err := s.repository.ApprovePurchaseRequest(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrPurchaseRequestCannotApprove
+		}
+
+		return nil, fmt.Errorf("approve purchase request: %w", err)
+	}
+
+	return request, nil
 }
 
 func (s *purchaseRequestService) RejectPurchaseRequest(
 	ctx context.Context,
 	id string,
 ) (*domain.PurchaseRequest, error) {
-	return s.repository.RejectPurchaseRequest(ctx, id)
+	request, err := s.repository.RejectPurchaseRequest(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrPurchaseRequestCannotReject
+		}
+
+		return nil, fmt.Errorf("reject purchase request: %w", err)
+	}
+
+	return request, nil
 }
 
 func (s *purchaseRequestService) GetPurchaseRequestItems(
@@ -330,4 +370,55 @@ func (s *purchaseRequestService) GetPurchaseRequestItems(
 		ctx,
 		purchaseRequestID,
 	)
+}
+
+func (s *purchaseRequestService) UpdatePurchaseRequestItem(
+	ctx context.Context,
+	item *domain.PurchaseRequestItem,
+) (*domain.PurchaseRequestItem, error) {
+	if item == nil {
+		return nil, fmt.Errorf("purchase request item cannot be nil")
+	}
+
+	if item.Quantity.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("quantity must be greater than zero")
+	}
+
+	if item.EstimatedUnitPrice != nil &&
+		item.EstimatedUnitPrice.IsNegative() {
+		return nil, fmt.Errorf(
+			"estimated unit price cannot be negative",
+		)
+	}
+
+	updatedItem, err := s.itemRepository.UpdatePurchaseRequestItem(
+		ctx,
+		item,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"update purchase request item: %w",
+			err,
+		)
+	}
+
+	return updatedItem, nil
+}
+
+func (s *purchaseRequestService) DeletePurchaseRequestItem(
+	ctx context.Context,
+	id string,
+) error {
+	if id == "" {
+		return fmt.Errorf("purchase request item id cannot be empty")
+	}
+
+	if err := s.itemRepository.DeletePurchaseRequestItem(ctx, id); err != nil {
+		return fmt.Errorf(
+			"delete purchase request item: %w",
+			err,
+		)
+	}
+
+	return nil
 }

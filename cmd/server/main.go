@@ -73,6 +73,36 @@ func main() {
 		purchaseRequestHandler.GetByID,
 	)
 
+	app.Get(
+		"/api/v1/purchase-requests",
+		purchaseRequestHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/purchase-requests/:id",
+		purchaseRequestHandler.GetByID,
+	)
+
+	app.Put(
+		"/api/v1/purchase-requests/:id",
+		purchaseRequestHandler.Update,
+	)
+
+	app.Post(
+		"/api/v1/purchase-requests/:id/submit",
+		purchaseRequestHandler.Submit,
+	)
+
+	app.Post(
+		"/api/v1/purchase-requests/:id/approve",
+		purchaseRequestHandler.Approve,
+	)
+
+	app.Post(
+		"/api/v1/purchase-requests/:id/reject",
+		purchaseRequestHandler.Reject,
+	)
+
 	// Start server.
 	log.Printf(
 		"purchasing service running on :%s",
