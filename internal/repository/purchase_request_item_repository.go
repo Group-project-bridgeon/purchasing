@@ -55,6 +55,14 @@ func NewPostgresPurchaseRequestItemRepository(
 	}
 }
 
+func NewPostgresPurchaseRequestItemRepositoryWithTx(
+	tx pgx.Tx,
+) PurchaseRequestItemRepository {
+	return &postgresPurchaseRequestItemRepository{
+		queries: generated.New(tx),
+	}
+}
+
 func (r *postgresPurchaseRequestItemRepository) CreatePurchaseRequestItem(
 	ctx context.Context,
 	item *domain.PurchaseRequestItem,

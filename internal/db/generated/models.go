@@ -8,6 +8,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DocumentNumberCounter struct {
+	DocumentType string `json:"document_type"`
+	Year         int32  `json:"year"`
+	LastNumber   int64  `json:"last_number"`
+}
+
 type PurchaseRequest struct {
 	ID            pgtype.UUID        `json:"id"`
 	RequestNumber string             `json:"request_number"`

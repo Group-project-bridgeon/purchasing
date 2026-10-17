@@ -12,17 +12,23 @@ import (
 )
 
 type postgresPurchaseRequestRepository struct {
-	db      *pgxpool.Pool
 	queries *generated.Queries
 }
 
 func NewPostgresPurchaseRequestRepository(
-    db *pgxpool.Pool,
+	db *pgxpool.Pool,
 ) PurchaseRequestRepository {
-    return &postgresPurchaseRequestRepository{
-        db:      db,
-        queries: generated.New(db),
-    }
+	return &postgresPurchaseRequestRepository{
+		queries: generated.New(db),
+	}
+}
+
+func NewPostgresPurchaseRequestRepositoryWithTx(
+	tx pgx.Tx,
+) PurchaseRequestRepository {
+	return &postgresPurchaseRequestRepository{
+		queries: generated.New(tx),
+	}
 }
 
 func (r *postgresPurchaseRequestRepository) GetPurchaseRequestByID(
@@ -301,6 +307,5 @@ func (r *postgresPurchaseRequestRepository) RejectPurchaseRequest(
 
 	return mapPurchaseRequestToDomain(request), nil
 }
-
 
 var _ PurchaseRequestRepository = (*postgresPurchaseRequestRepository)(nil)

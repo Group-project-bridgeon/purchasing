@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cqFZORBOCPScFfPb7lyKJGsCTilcjqEJb5ipiy1FXqaNiO9AUzrRDXd0Wsk3InR
+\restrict IB9bXG7F21xVUTzgcuXFMbUSCBFdd6vcbIeQAWSUJp0tSHBerLiLFZKKqJmnbQr
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg13+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
@@ -35,6 +35,21 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: document_number_counters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.document_number_counters (
+    document_type character varying(50) NOT NULL,
+    year integer NOT NULL,
+    last_number bigint DEFAULT 0 NOT NULL,
+    CONSTRAINT document_number_counters_last_number_check CHECK ((last_number >= 0)),
+    CONSTRAINT document_number_counters_year_check CHECK ((year >= 2000))
+);
+
+
+ALTER TABLE public.document_number_counters OWNER TO postgres;
 
 --
 -- Name: purchase_request_items; Type: TABLE; Schema: public; Owner: postgres
@@ -89,6 +104,14 @@ CREATE TABLE public.schema_migrations (
 
 
 ALTER TABLE public.schema_migrations OWNER TO postgres;
+
+--
+-- Name: document_number_counters document_number_counters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.document_number_counters
+    ADD CONSTRAINT document_number_counters_pkey PRIMARY KEY (document_type, year);
+
 
 --
 -- Name: purchase_request_items purchase_request_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
@@ -176,5 +199,5 @@ ALTER TABLE ONLY public.purchase_request_items
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cqFZORBOCPScFfPb7lyKJGsCTilcjqEJb5ipiy1FXqaNiO9AUzrRDXd0Wsk3InR
+\unrestrict IB9bXG7F21xVUTzgcuXFMbUSCBFdd6vcbIeQAWSUJp0tSHBerLiLFZKKqJmnbQr
 

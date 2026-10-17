@@ -362,6 +362,35 @@ func (q *Queries) ListPurchaseRequestsByStatus(ctx context.Context, arg ListPurc
 	return items, nil
 }
 
+const nextDocumentNumber = `-- name: NextDocumentNumber :one
+INSERT INTO document_number_counters (
+    document_type,
+    year,
+    last_number
+)
+VALUES (
+    $1,
+    $2,
+    1
+)
+ON CONFLICT (document_type, year)
+DO UPDATE SET
+    last_number = document_number_counters.last_number + 1
+RETURNING last_number
+`
+
+type NextDocumentNumberParams struct {
+	DocumentType string `json:"document_type"`
+	Year         int32  `json:"year"`
+}
+
+func (q *Queries) NextDocumentNumber(ctx context.Context, arg NextDocumentNumberParams) (int64, error) {
+	row := q.db.QueryRow(ctx, nextDocumentNumber, arg.DocumentType, arg.Year)
+	var last_number int64
+	err := row.Scan(&last_number)
+	return last_number, err
+}
+
 const rejectPurchaseRequest = `-- name: RejectPurchaseRequest :one
 UPDATE purchase_requests
 SET

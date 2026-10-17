@@ -3,15 +3,23 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
 )
 
+const purchaseRequestDocumentType = "purchase_request"
+
+type CreatePurchaseRequestInput struct {
+	Request *domain.PurchaseRequest
+	Items   []*domain.PurchaseRequestItem
+}
+
 type PurchaseRequestService interface {
 	CreatePurchaseRequest(
 		ctx context.Context,
-		request *domain.PurchaseRequest,
+		input *CreatePurchaseRequestInput,
 	) (*domain.PurchaseRequest, error)
 
 	GetPurchaseRequestByID(
@@ -56,25 +64,164 @@ type PurchaseRequestService interface {
 		ctx context.Context,
 		id string,
 	) (*domain.PurchaseRequest, error)
+
+	GetPurchaseRequestItems(
+		ctx context.Context,
+		purchaseRequestID string,
+	) ([]*domain.PurchaseRequestItem, error)
 }
 
 type purchaseRequestService struct {
-	repository repository.PurchaseRequestRepository
+	repository     repository.PurchaseRequestRepository
+	itemRepository repository.PurchaseRequestItemRepository
+	transaction    repository.TransactionManager
 }
 
 func NewPurchaseRequestService(
 	repository repository.PurchaseRequestRepository,
+	itemRepository repository.PurchaseRequestItemRepository,
+	transaction repository.TransactionManager,
 ) PurchaseRequestService {
 	return &purchaseRequestService{
-		repository: repository,
+		repository:     repository,
+		itemRepository: itemRepository,
+		transaction:    transaction,
 	}
 }
 
 func (s *purchaseRequestService) CreatePurchaseRequest(
 	ctx context.Context,
-	request *domain.PurchaseRequest,
+	input *CreatePurchaseRequestInput,
 ) (*domain.PurchaseRequest, error) {
-	return s.repository.CreatePurchaseRequest(ctx, request)
+	if input == nil {
+		return nil, fmt.Errorf("create purchase request input cannot be nil")
+	}
+
+	if input.Request == nil {
+		return nil, fmt.Errorf("purchase request cannot be nil")
+	}
+
+	if len(input.Items) == 0 {
+		return nil, fmt.Errorf(
+			"purchase request must contain at least one item",
+		)
+	}
+
+	for i, item := range input.Items {
+		if item == nil {
+			return nil, fmt.Errorf(
+				"purchase request item %d cannot be nil",
+				i+1,
+			)
+		}
+
+		if item.Quantity.IsZero() || item.Quantity.IsNegative() {
+			return nil, fmt.Errorf(
+				"purchase request item %d must have a positive quantity",
+				i+1,
+			)
+		}
+
+		if item.EstimatedUnitPrice != nil &&
+			item.EstimatedUnitPrice.IsNegative() {
+			return nil, fmt.Errorf(
+				"purchase request item %d cannot have a negative estimated unit price",
+				i+1,
+			)
+		}
+	}
+
+	var createdRequest *domain.PurchaseRequest
+
+	err := s.transaction.WithinTransaction(
+		ctx,
+		func(
+			requestRepository repository.PurchaseRequestRepository,
+			itemRepository repository.PurchaseRequestItemRepository,
+			documentNumberRepository repository.DocumentNumberRepository,
+		) error {
+			/*
+				Generate the purchase request number inside
+				the same transaction as the request creation.
+
+				Example:
+				PR-2026-000001
+				PR-2026-000002
+			*/
+			year := time.Now().Year()
+
+			nextNumber, err := documentNumberRepository.NextDocumentNumber(
+				ctx,
+				purchaseRequestDocumentType,
+				year,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"generate purchase request number: %w",
+					err,
+				)
+			}
+
+			requestNumber := fmt.Sprintf(
+				"PR-%d-%06d",
+				year,
+				nextNumber,
+			)
+
+			/*
+				Create a copy so we don't mutate the caller's
+				original request object.
+			*/
+			request := *input.Request
+			request.RequestNumber = requestNumber
+
+			/*
+				The service controls the initial state.
+				A newly created purchase request must always
+				start as draft.
+			*/
+			request.Status = domain.PurchaseRequestStatusDraft
+
+			createdRequest, err = requestRepository.CreatePurchaseRequest(
+				ctx,
+				&request,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"create purchase request: %w",
+					err,
+				)
+			}
+
+			for i, item := range input.Items {
+				/*
+					Create a copy so we don't mutate the
+					caller's item object.
+				*/
+				itemCopy := *item
+				itemCopy.PurchaseRequestID = createdRequest.ID
+
+				if _, err := itemRepository.CreatePurchaseRequestItem(
+					ctx,
+					&itemCopy,
+				); err != nil {
+					return fmt.Errorf(
+						"create purchase request item %d: %w",
+						i+1,
+						err,
+					)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return createdRequest, nil
 }
 
 func (s *purchaseRequestService) GetPurchaseRequestByID(
@@ -88,7 +235,10 @@ func (s *purchaseRequestService) GetPurchaseRequestByNumber(
 	ctx context.Context,
 	requestNumber string,
 ) (*domain.PurchaseRequest, error) {
-	return s.repository.GetPurchaseRequestByNumber(ctx, requestNumber)
+	return s.repository.GetPurchaseRequestByNumber(
+		ctx,
+		requestNumber,
+	)
 }
 
 func (s *purchaseRequestService) ListPurchaseRequests(
@@ -96,7 +246,11 @@ func (s *purchaseRequestService) ListPurchaseRequests(
 	limit int,
 	offset int,
 ) ([]*domain.PurchaseRequest, error) {
-	return s.repository.ListPurchaseRequests(ctx, limit, offset)
+	return s.repository.ListPurchaseRequests(
+		ctx,
+		limit,
+		offset,
+	)
 }
 
 func (s *purchaseRequestService) ListPurchaseRequestsByStatus(
@@ -118,12 +272,20 @@ func (s *purchaseRequestService) UpdatePurchaseRequest(
 	request *domain.PurchaseRequest,
 ) (*domain.PurchaseRequest, error) {
 	if request == nil {
-		return nil, fmt.Errorf("purchase request cannot be nil")
+		return nil, fmt.Errorf(
+			"purchase request cannot be nil",
+		)
 	}
 
-	current, err := s.repository.GetPurchaseRequestByID(ctx, request.ID)
+	current, err := s.repository.GetPurchaseRequestByID(
+		ctx,
+		request.ID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("get purchase request: %w", err)
+		return nil, fmt.Errorf(
+			"get purchase request: %w",
+			err,
+		)
 	}
 
 	if current.Status != domain.PurchaseRequestStatusDraft {
@@ -133,7 +295,10 @@ func (s *purchaseRequestService) UpdatePurchaseRequest(
 		)
 	}
 
-	return s.repository.UpdatePurchaseRequest(ctx, request)
+	return s.repository.UpdatePurchaseRequest(
+		ctx,
+		request,
+	)
 }
 
 func (s *purchaseRequestService) SubmitPurchaseRequest(
@@ -155,4 +320,14 @@ func (s *purchaseRequestService) RejectPurchaseRequest(
 	id string,
 ) (*domain.PurchaseRequest, error) {
 	return s.repository.RejectPurchaseRequest(ctx, id)
+}
+
+func (s *purchaseRequestService) GetPurchaseRequestItems(
+	ctx context.Context,
+	purchaseRequestID string,
+) ([]*domain.PurchaseRequestItem, error) {
+	return s.itemRepository.GetPurchaseRequestItems(
+		ctx,
+		purchaseRequestID,
+	)
 }

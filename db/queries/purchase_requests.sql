@@ -153,3 +153,19 @@ WHERE purchase_request_items.id = $1
   );
 
 
+-- name: NextDocumentNumber :one
+INSERT INTO document_number_counters (
+    document_type,
+    year,
+    last_number
+)
+VALUES (
+    $1,
+    $2,
+    1
+)
+ON CONFLICT (document_type, year)
+DO UPDATE SET
+    last_number = document_number_counters.last_number + 1
+RETURNING last_number;
+
