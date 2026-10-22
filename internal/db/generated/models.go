@@ -14,6 +14,39 @@ type DocumentNumberCounter struct {
 	LastNumber   int64  `json:"last_number"`
 }
 
+type PurchaseOrder struct {
+	ID                   pgtype.UUID        `json:"id"`
+	PoNumber             string             `json:"po_number"`
+	PurchaseRequestID    pgtype.UUID        `json:"purchase_request_id"`
+	VendorID             pgtype.UUID        `json:"vendor_id"`
+	Status               string             `json:"status"`
+	OrderDate            pgtype.Timestamptz `json:"order_date"`
+	ExpectedDeliveryDate pgtype.Date        `json:"expected_delivery_date"`
+	Currency             string             `json:"currency"`
+	Subtotal             pgtype.Numeric     `json:"subtotal"`
+	TaxAmount            pgtype.Numeric     `json:"tax_amount"`
+	TotalAmount          pgtype.Numeric     `json:"total_amount"`
+	PaymentTerms         pgtype.Text        `json:"payment_terms"`
+	ShippingAddress      pgtype.Text        `json:"shipping_address"`
+	Notes                pgtype.Text        `json:"notes"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PurchaseOrderItem struct {
+	ID               pgtype.UUID        `json:"id"`
+	PurchaseOrderID  pgtype.UUID        `json:"purchase_order_id"`
+	ItemID           pgtype.UUID        `json:"item_id"`
+	Description      string             `json:"description"`
+	Quantity         pgtype.Numeric     `json:"quantity"`
+	UnitPrice        pgtype.Numeric     `json:"unit_price"`
+	TaxRate          pgtype.Numeric     `json:"tax_rate"`
+	TotalPrice       pgtype.Numeric     `json:"total_price"`
+	ReceivedQuantity pgtype.Numeric     `json:"received_quantity"`
+	BilledQuantity   pgtype.Numeric     `json:"billed_quantity"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
 type PurchaseRequest struct {
 	ID            pgtype.UUID        `json:"id"`
 	RequestNumber string             `json:"request_number"`

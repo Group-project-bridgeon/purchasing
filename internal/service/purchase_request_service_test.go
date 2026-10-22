@@ -204,6 +204,8 @@ type mockPurchaseRequestRepository struct {
 	createdRequest *domain.PurchaseRequest
 	createErr      error
 	createCalled   bool
+	getRequest     *domain.PurchaseRequest
+	getErr         error
 }
 
 func (m *mockPurchaseRequestRepository) CreatePurchaseRequest(
@@ -223,7 +225,10 @@ func (m *mockPurchaseRequestRepository) GetPurchaseRequestByID(
 	ctx context.Context,
 	id string,
 ) (*domain.PurchaseRequest, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	return m.getRequest, nil
 }
 
 func (m *mockPurchaseRequestRepository) GetPurchaseRequestByNumber(
@@ -280,7 +285,9 @@ func (m *mockPurchaseRequestRepository) RejectPurchaseRequest(
 
 type mockPurchaseRequestItemRepository struct {
 	createdItems []*domain.PurchaseRequestItem
+	items        []*domain.PurchaseRequestItem
 	createErr    error
+	getErr       error
 }
 
 func (m *mockPurchaseRequestItemRepository) CreatePurchaseRequestItem(
@@ -300,7 +307,10 @@ func (m *mockPurchaseRequestItemRepository) GetPurchaseRequestItems(
 	ctx context.Context,
 	purchaseRequestID string,
 ) ([]*domain.PurchaseRequestItem, error) {
-	return nil, nil
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	return m.items, nil
 }
 
 func (m *mockPurchaseRequestItemRepository) GetPurchaseRequestItemByID(
@@ -550,5 +560,94 @@ func TestCreatePurchaseRequest_ItemCreationFails(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "create purchase request item 1") {
 		t.Fatalf("expected item creation error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_EmptyID(t *testing.T) {
+	service := &purchaseRequestService{}
+
+	_, err := service.AddPurchaseRequestItem(context.Background(), "", &domain.PurchaseRequestItem{})
+	if err == nil || !strings.Contains(err.Error(), "cannot be empty") {
+		t.Fatalf("expected empty id error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_NilItem(t *testing.T) {
+	service := &purchaseRequestService{}
+
+	_, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", nil)
+	if err == nil || !strings.Contains(err.Error(), "cannot be nil") {
+		t.Fatalf("expected nil item error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_InvalidQuantity(t *testing.T) {
+	service := &purchaseRequestService{}
+
+	_, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", &domain.PurchaseRequestItem{
+		Quantity: decimal.Zero,
+	})
+	if err == nil || !strings.Contains(err.Error(), "greater than zero") {
+		t.Fatalf("expected quantity error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_NegativeEstimatedUnitPrice(t *testing.T) {
+	service := &purchaseRequestService{}
+	neg := decimal.NewFromInt(-10)
+
+	_, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", &domain.PurchaseRequestItem{
+		Quantity:           decimal.NewFromInt(5),
+		EstimatedUnitPrice: &neg,
+	})
+	if err == nil || !strings.Contains(err.Error(), "cannot be negative") {
+		t.Fatalf("expected negative price error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_NotDraft(t *testing.T) {
+	requestRepo := &mockPurchaseRequestRepository{
+		getRequest: &domain.PurchaseRequest{
+			ID:     "pr-1",
+			Status: domain.PurchaseRequestStatusSubmitted,
+		},
+	}
+	itemRepo := &mockPurchaseRequestItemRepository{}
+
+	service := NewPurchaseRequestService(requestRepo, itemRepo, nil)
+
+	_, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", &domain.PurchaseRequestItem{
+		Quantity: decimal.NewFromInt(5),
+	})
+	if err == nil || !strings.Contains(err.Error(), "draft") {
+		t.Fatalf("expected draft status error, got %v", err)
+	}
+}
+
+func TestAddPurchaseRequestItem_Success(t *testing.T) {
+	requestRepo := &mockPurchaseRequestRepository{
+		getRequest: &domain.PurchaseRequest{
+			ID:     "pr-1",
+			Status: domain.PurchaseRequestStatusDraft,
+		},
+	}
+	itemRepo := &mockPurchaseRequestItemRepository{}
+
+	service := NewPurchaseRequestService(requestRepo, itemRepo, nil)
+
+	created, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", &domain.PurchaseRequestItem{
+		ItemID:      "item-123",
+		Description: "Steel pipes",
+		Quantity:    decimal.NewFromInt(10),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if created.PurchaseRequestID != "pr-1" {
+		t.Fatalf("expected PR ID pr-1, got %s", created.PurchaseRequestID)
+	}
+	if len(itemRepo.createdItems) != 1 {
+		t.Fatalf("expected 1 created item in repo, got %d", len(itemRepo.createdItems))
 	}
 }

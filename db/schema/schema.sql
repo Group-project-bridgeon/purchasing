@@ -196,6 +196,83 @@ ALTER TABLE ONLY public.purchase_request_items
 
 
 --
+-- Name: purchase_orders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.purchase_orders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    po_number character varying(50) NOT NULL,
+    purchase_request_id uuid,
+    vendor_id uuid NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    order_date timestamp with time zone DEFAULT now() NOT NULL,
+    expected_delivery_date date,
+    currency character varying(3) DEFAULT 'USD'::character varying NOT NULL,
+    subtotal numeric(18,2) DEFAULT 0 NOT NULL,
+    tax_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    total_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    payment_terms character varying(100),
+    shipping_address text,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT purchase_orders_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending_approval'::character varying, 'approved'::character varying, 'issued'::character varying, 'partially_received'::character varying, 'received'::character varying, 'billed'::character varying, 'closed'::character varying, 'cancelled'::character varying])::text[]))),
+    CONSTRAINT purchase_orders_subtotal_check CHECK ((subtotal >= (0)::numeric)),
+    CONSTRAINT purchase_orders_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
+    CONSTRAINT purchase_orders_total_amount_check CHECK ((total_amount >= (0)::numeric))
+);
+
+ALTER TABLE public.purchase_orders OWNER TO postgres;
+
+--
+-- Name: purchase_order_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.purchase_order_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    purchase_order_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    description text NOT NULL,
+    quantity numeric(18,3) NOT NULL,
+    unit_price numeric(18,2) NOT NULL,
+    tax_rate numeric(5,2) DEFAULT 0 NOT NULL,
+    total_price numeric(18,2) NOT NULL,
+    received_quantity numeric(18,3) DEFAULT 0 NOT NULL,
+    billed_quantity numeric(18,3) DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT purchase_order_items_quantity_check CHECK ((quantity > (0)::numeric)),
+    CONSTRAINT purchase_order_items_unit_price_check CHECK ((unit_price >= (0)::numeric)),
+    CONSTRAINT purchase_order_items_tax_rate_check CHECK ((tax_rate >= (0)::numeric)),
+    CONSTRAINT purchase_order_items_total_price_check CHECK ((total_price >= (0)::numeric)),
+    CONSTRAINT purchase_order_items_received_quantity_check CHECK ((received_quantity >= (0)::numeric)),
+    CONSTRAINT purchase_order_items_billed_quantity_check CHECK ((billed_quantity >= (0)::numeric))
+);
+
+ALTER TABLE public.purchase_order_items OWNER TO postgres;
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_po_number_key UNIQUE (po_number);
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_purchase_orders_vendor_id ON public.purchase_orders USING btree (vendor_id);
+CREATE INDEX idx_purchase_orders_pr_id ON public.purchase_orders USING btree (purchase_request_id);
+CREATE INDEX idx_purchase_orders_status ON public.purchase_orders USING btree (status);
+CREATE INDEX idx_purchase_orders_order_date ON public.purchase_orders USING btree (order_date);
+CREATE INDEX idx_purchase_order_items_po_id ON public.purchase_order_items USING btree (purchase_order_id);
+CREATE INDEX idx_purchase_order_items_item_id ON public.purchase_order_items USING btree (item_id);
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_purchase_request_fk FOREIGN KEY (purchase_request_id) REFERENCES public.purchase_requests(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_po_fk FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE CASCADE;
+
+--
 -- PostgreSQL database dump complete
 --
 

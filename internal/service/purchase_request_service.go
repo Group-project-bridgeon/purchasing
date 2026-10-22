@@ -73,6 +73,12 @@ type PurchaseRequestService interface {
 		purchaseRequestID string,
 	) ([]*domain.PurchaseRequestItem, error)
 
+	AddPurchaseRequestItem(
+		ctx context.Context,
+		purchaseRequestID string,
+		item *domain.PurchaseRequestItem,
+	) (*domain.PurchaseRequestItem, error)
+
 	UpdatePurchaseRequestItem(
 		ctx context.Context,
 		item *domain.PurchaseRequestItem,
@@ -370,6 +376,47 @@ func (s *purchaseRequestService) GetPurchaseRequestItems(
 		ctx,
 		purchaseRequestID,
 	)
+}
+
+func (s *purchaseRequestService) AddPurchaseRequestItem(
+	ctx context.Context,
+	purchaseRequestID string,
+	item *domain.PurchaseRequestItem,
+) (*domain.PurchaseRequestItem, error) {
+	if purchaseRequestID == "" {
+		return nil, fmt.Errorf("purchase request id cannot be empty")
+	}
+
+	if item == nil {
+		return nil, fmt.Errorf("purchase request item cannot be nil")
+	}
+
+	if item.Quantity.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("quantity must be greater than zero")
+	}
+
+	if item.EstimatedUnitPrice != nil && item.EstimatedUnitPrice.IsNegative() {
+		return nil, fmt.Errorf("estimated unit price cannot be negative")
+	}
+
+	current, err := s.repository.GetPurchaseRequestByID(ctx, purchaseRequestID)
+	if err != nil {
+		return nil, fmt.Errorf("get purchase request: %w", err)
+	}
+
+	if current.Status != domain.PurchaseRequestStatusDraft {
+		return nil, fmt.Errorf("purchase request item can only be added to a draft request")
+	}
+
+	itemCopy := *item
+	itemCopy.PurchaseRequestID = purchaseRequestID
+
+	created, err := s.itemRepository.CreatePurchaseRequestItem(ctx, &itemCopy)
+	if err != nil {
+		return nil, fmt.Errorf("create purchase request item: %w", err)
+	}
+
+	return created, nil
 }
 
 func (s *purchaseRequestService) UpdatePurchaseRequestItem(

@@ -55,6 +55,30 @@ func main() {
 			purchaseRequestService,
 		)
 
+	// Create Purchase Order repositories.
+	purchaseOrderRepository :=
+		repository.NewPostgresPurchaseOrderRepository(db)
+
+	purchaseOrderItemRepository :=
+		repository.NewPostgresPurchaseOrderItemRepository(db)
+
+	poTransactionManager :=
+		repository.NewPostgresPurchaseOrderTransactionManager(db)
+
+	// Create Purchase Order service.
+	purchaseOrderService :=
+		service.NewPurchaseOrderService(
+			purchaseOrderRepository,
+			purchaseOrderItemRepository,
+			poTransactionManager,
+		)
+
+	// Create Purchase Order handler.
+	purchaseOrderHandler :=
+		handler.NewPurchaseOrderHandler(
+			purchaseOrderService,
+		)
+
 	// Create Fiber application.
 	app := fiber.New()
 
@@ -62,15 +86,6 @@ func main() {
 	app.Post(
 		"/api/v1/purchase-requests",
 		purchaseRequestHandler.Create,
-	)
-	app.Post(
-		"/api/v1/purchase-requests",
-		purchaseRequestHandler.Create,
-	)
-
-	app.Get(
-		"/api/v1/purchase-requests/:id",
-		purchaseRequestHandler.GetByID,
 	)
 
 	app.Get(
@@ -101,6 +116,89 @@ func main() {
 	app.Post(
 		"/api/v1/purchase-requests/:id/reject",
 		purchaseRequestHandler.Reject,
+	)
+
+	// Purchase Request Item routes.
+	app.Get(
+		"/api/v1/purchase-requests/:id/items",
+		purchaseRequestHandler.GetItems,
+	)
+
+	app.Post(
+		"/api/v1/purchase-requests/:id/items",
+		purchaseRequestHandler.AddItem,
+	)
+
+	app.Put(
+		"/api/v1/purchase-requests/:id/items/:itemId",
+		purchaseRequestHandler.UpdateItem,
+	)
+
+	app.Delete(
+		"/api/v1/purchase-requests/:id/items/:itemId",
+		purchaseRequestHandler.DeleteItem,
+	)
+
+	// Purchase Order routes.
+	app.Post(
+		"/api/v1/purchase-orders",
+		purchaseOrderHandler.Create,
+	)
+
+	app.Post(
+		"/api/v1/purchase-orders/from-request/:prId",
+		purchaseOrderHandler.CreateFromPR,
+	)
+
+	app.Get(
+		"/api/v1/purchase-orders",
+		purchaseOrderHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/purchase-orders/:id",
+		purchaseOrderHandler.GetByID,
+	)
+
+	app.Put(
+		"/api/v1/purchase-orders/:id",
+		purchaseOrderHandler.Update,
+	)
+
+	app.Post(
+		"/api/v1/purchase-orders/:id/approve",
+		purchaseOrderHandler.Approve,
+	)
+
+	app.Post(
+		"/api/v1/purchase-orders/:id/issue",
+		purchaseOrderHandler.Issue,
+	)
+
+	app.Post(
+		"/api/v1/purchase-orders/:id/cancel",
+		purchaseOrderHandler.Cancel,
+	)
+
+	// Purchase Order Item routes.
+	app.Get(
+		"/api/v1/purchase-orders/:id/items",
+		purchaseOrderHandler.GetItems,
+	)
+
+	app.Post(
+		"/api/v1/purchase-orders/:id/items",
+		purchaseOrderHandler.AddItem,
+	)
+
+	app.Put(
+		"/api/v1/purchase-orders/:id/items/:itemId",
+		purchaseOrderHandler.UpdateItem,
+	)
+
+	app.Delete(
+		"/api/v1/purchase-orders/:id/items/:itemId",
+		purchaseOrderHandler.DeleteItem,
 	)
 
 	// Start server.

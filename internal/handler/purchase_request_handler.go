@@ -356,3 +356,93 @@ func (h *PurchaseRequestHandler) Reject(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
+
+func (h *PurchaseRequestHandler) GetItems(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	items, err := h.service.GetPurchaseRequestItems(c.UserContext(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	responses := make([]dto.PurchaseRequestItemResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, helper.ToPurchaseRequestItemResponse(item))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(responses)
+}
+
+func (h *PurchaseRequestHandler) AddItem(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	var body dto.CreatePurchaseRequestItemBody
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	item, err := helper.ParseCreatePurchaseRequestItem(&body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	createdItem, err := h.service.AddPurchaseRequestItem(c.UserContext(), id, item)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(helper.ToPurchaseRequestItemResponse(createdItem))
+}
+
+func (h *PurchaseRequestHandler) UpdateItem(c *fiber.Ctx) error {
+	id := c.Params("id")
+	itemID := c.Params("itemId")
+
+	var body dto.UpdatePurchaseRequestItemBody
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	item, err := helper.ParseUpdatePurchaseRequestItem(&body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	item.ID = itemID
+	item.PurchaseRequestID = id
+
+	updatedItem, err := h.service.UpdatePurchaseRequestItem(c.UserContext(), item)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ToPurchaseRequestItemResponse(updatedItem))
+}
+
+func (h *PurchaseRequestHandler) DeleteItem(c *fiber.Ctx) error {
+	itemID := c.Params("itemId")
+
+	if err := h.service.DeletePurchaseRequestItem(c.UserContext(), itemID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "purchase request item deleted successfully",
+	})
+}

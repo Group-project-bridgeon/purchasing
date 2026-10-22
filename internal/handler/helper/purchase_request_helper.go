@@ -94,6 +94,54 @@ func ParseCreatePurchaseRequest(
 	}, nil
 }
 
+func ParseCreatePurchaseRequestItem(
+	body *dto.CreatePurchaseRequestItemBody,
+) (*domain.PurchaseRequestItem, error) {
+	if body == nil {
+		return nil, fmt.Errorf("request body cannot be nil")
+	}
+
+	quantity, err := decimal.NewFromString(body.Quantity)
+	if err != nil {
+		return nil, fmt.Errorf("invalid quantity: %w", err)
+	}
+
+	var estimatedUnitPrice *decimal.Decimal
+	if body.EstimatedUnitPrice != nil && *body.EstimatedUnitPrice != "" {
+		price, err := decimal.NewFromString(*body.EstimatedUnitPrice)
+		if err != nil {
+			return nil, fmt.Errorf("invalid estimated_unit_price: %w", err)
+		}
+		estimatedUnitPrice = &price
+	}
+
+	return &domain.PurchaseRequestItem{
+		ItemID:             body.ItemID,
+		Description:        body.Description,
+		Quantity:           quantity,
+		EstimatedUnitPrice: estimatedUnitPrice,
+	}, nil
+}
+
+func ToPurchaseRequestItemResponse(
+	item *domain.PurchaseRequestItem,
+) dto.PurchaseRequestItemResponse {
+	var estimatedUnitPrice *string
+	if item.EstimatedUnitPrice != nil {
+		value := item.EstimatedUnitPrice.String()
+		estimatedUnitPrice = &value
+	}
+
+	return dto.PurchaseRequestItemResponse{
+		ID:                 item.ID,
+		PurchaseRequestID:  item.PurchaseRequestID,
+		ItemID:             item.ItemID,
+		Description:        item.Description,
+		Quantity:           item.Quantity.String(),
+		EstimatedUnitPrice: estimatedUnitPrice,
+	}
+}
+
 func ToPurchaseRequestResponse(
 	request *domain.PurchaseRequest,
 	items []*domain.PurchaseRequestItem,
@@ -105,23 +153,9 @@ func ToPurchaseRequestResponse(
 	)
 
 	for _, item := range items {
-		var estimatedUnitPrice *string
-
-		if item.EstimatedUnitPrice != nil {
-			value := item.EstimatedUnitPrice.String()
-			estimatedUnitPrice = &value
-		}
-
 		itemResponses = append(
 			itemResponses,
-			dto.PurchaseRequestItemResponse{
-				ID:                 item.ID,
-				PurchaseRequestID:  item.PurchaseRequestID,
-				ItemID:             item.ItemID,
-				Description:        item.Description,
-				Quantity:           item.Quantity.String(),
-				EstimatedUnitPrice: estimatedUnitPrice,
-			},
+			ToPurchaseRequestItemResponse(item),
 		)
 	}
 
