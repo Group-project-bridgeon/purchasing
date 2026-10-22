@@ -62,6 +62,9 @@ func main() {
 	purchaseOrderItemRepository :=
 		repository.NewPostgresPurchaseOrderItemRepository(db)
 
+	documentNumberRepository :=
+		repository.NewPostgresDocumentNumberRepository(db)
+
 	poTransactionManager :=
 		repository.NewPostgresPurchaseOrderTransactionManager(db)
 
@@ -125,6 +128,33 @@ func main() {
 	vendorBillHandler :=
 		handler.NewVendorBillHandler(
 			vendorBillService,
+		)
+
+	// Create Purchase Return repositories.
+	purchaseReturnRepository :=
+		repository.NewPostgresPurchaseReturnRepository(db)
+
+	purchaseReturnItemRepository :=
+		repository.NewPostgresPurchaseReturnItemRepository(db)
+
+	purchaseReturnTxManager :=
+		repository.NewPostgresPurchaseReturnTransactionManager(db)
+
+	// Create Purchase Return service.
+	purchaseReturnService :=
+		service.NewPurchaseReturnService(
+			purchaseReturnRepository,
+			purchaseReturnItemRepository,
+			purchaseOrderRepository,
+			purchaseOrderItemRepository,
+			documentNumberRepository,
+			purchaseReturnTxManager,
+		)
+
+	// Create Purchase Return handler.
+	purchaseReturnHandler :=
+		handler.NewPurchaseReturnHandler(
+			purchaseReturnService,
 		)
 
 	// Create Fiber application.
@@ -309,6 +339,52 @@ func main() {
 	app.Get(
 		"/api/v1/purchase-orders/:id/vendor-bills",
 		vendorBillHandler.ListByPO,
+	)
+
+	// Purchase Return routes.
+	app.Post(
+		"/api/v1/purchase-returns",
+		purchaseReturnHandler.Create,
+	)
+
+	app.Get(
+		"/api/v1/purchase-returns",
+		purchaseReturnHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/purchase-returns/:id",
+		purchaseReturnHandler.GetByID,
+	)
+
+	app.Get(
+		"/api/v1/purchase-returns/number/:returnNumber",
+		purchaseReturnHandler.GetByNumber,
+	)
+
+	app.Put(
+		"/api/v1/purchase-returns/:id",
+		purchaseReturnHandler.Update,
+	)
+
+	app.Post(
+		"/api/v1/purchase-returns/:id/approve",
+		purchaseReturnHandler.Approve,
+	)
+
+	app.Post(
+		"/api/v1/purchase-returns/:id/ship",
+		purchaseReturnHandler.Ship,
+	)
+
+	app.Post(
+		"/api/v1/purchase-returns/:id/complete",
+		purchaseReturnHandler.Complete,
+	)
+
+	app.Post(
+		"/api/v1/purchase-returns/:id/cancel",
+		purchaseReturnHandler.Cancel,
 	)
 
 	// Start server.

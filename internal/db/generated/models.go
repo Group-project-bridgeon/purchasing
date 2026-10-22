@@ -95,6 +95,37 @@ type PurchaseRequestItem struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 }
 
+type PurchaseReturn struct {
+	ID                pgtype.UUID        `json:"id"`
+	ReturnNumber      string             `json:"return_number"`
+	PurchaseOrderID   pgtype.UUID        `json:"purchase_order_id"`
+	GoodsReceiptID    pgtype.UUID        `json:"goods_receipt_id"`
+	VendorID          pgtype.UUID        `json:"vendor_id"`
+	Status            string             `json:"status"`
+	ReturnDate        pgtype.Date        `json:"return_date"`
+	TotalReturnAmount pgtype.Numeric     `json:"total_return_amount"`
+	Reason            string             `json:"reason"`
+	Carrier           pgtype.Text        `json:"carrier"`
+	TrackingNumber    pgtype.Text        `json:"tracking_number"`
+	CreatedBy         pgtype.UUID        `json:"created_by"`
+	Notes             pgtype.Text        `json:"notes"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PurchaseReturnItem struct {
+	ID                  pgtype.UUID        `json:"id"`
+	PurchaseReturnID    pgtype.UUID        `json:"purchase_return_id"`
+	PurchaseOrderItemID pgtype.UUID        `json:"purchase_order_item_id"`
+	ItemID              pgtype.UUID        `json:"item_id"`
+	Description         string             `json:"description"`
+	ReturnQuantity      pgtype.Numeric     `json:"return_quantity"`
+	UnitPrice           pgtype.Numeric     `json:"unit_price"`
+	TotalPrice          pgtype.Numeric     `json:"total_price"`
+	Reason              pgtype.Text        `json:"reason"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+}
+
 type SchemaMigration struct {
 	Version int64 `json:"version"`
 	Dirty   bool  `json:"dirty"`

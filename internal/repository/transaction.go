@@ -253,3 +253,66 @@ func (m *postgresVendorBillTransactionManager) WithinTransaction(
 
 	return tx.Commit(ctx)
 }
+
+type PurchaseReturnTransactionManager interface {
+	WithinTransaction(
+		ctx context.Context,
+		fn func(
+			PurchaseReturnRepository,
+			PurchaseReturnItemRepository,
+			PurchaseOrderRepository,
+			PurchaseOrderItemRepository,
+			DocumentNumberRepository,
+		) error,
+	) error
+}
+
+type postgresPurchaseReturnTransactionManager struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresPurchaseReturnTransactionManager(
+	db *pgxpool.Pool,
+) PurchaseReturnTransactionManager {
+	return &postgresPurchaseReturnTransactionManager{
+		db: db,
+	}
+}
+
+func (m *postgresPurchaseReturnTransactionManager) WithinTransaction(
+	ctx context.Context,
+	fn func(
+		PurchaseReturnRepository,
+		PurchaseReturnItemRepository,
+		PurchaseOrderRepository,
+		PurchaseOrderItemRepository,
+		DocumentNumberRepository,
+	) error,
+) error {
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	returnRepository := NewPostgresPurchaseReturnRepositoryWithTx(tx)
+	returnItemRepository := NewPostgresPurchaseReturnItemRepositoryWithTx(tx)
+	poRepository := NewPostgresPurchaseOrderRepositoryWithTx(tx)
+	poItemRepository := NewPostgresPurchaseOrderItemRepositoryWithTx(tx)
+	documentNumberRepository := NewPostgresDocumentNumberRepositoryWithTx(tx)
+
+	if err := fn(
+		returnRepository,
+		returnItemRepository,
+		poRepository,
+		poItemRepository,
+		documentNumberRepository,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}

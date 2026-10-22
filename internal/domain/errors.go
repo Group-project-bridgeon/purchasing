@@ -27,4 +27,13 @@ var (
 	ErrVendorBillCannotCancel   = errors.New("vendor bill cannot be cancelled in its current status")
 	ErrDuplicateVendorInvoice   = errors.New("an invoice with this bill number already exists for this vendor")
 	ErrInvalidPOStatusForBilling = errors.New("purchase order is not in a valid status for billing")
+
+	ErrPurchaseReturnNotFound       = errors.New("purchase return not found")
+	ErrPurchaseReturnNotEditable    = errors.New("purchase return cannot be updated in its current status")
+	ErrPurchaseReturnCannotApprove  = errors.New("purchase return cannot be approved in its current status")
+	ErrPurchaseReturnCannotShip     = errors.New("purchase return cannot be shipped in its current status")
+	ErrPurchaseReturnCannotComplete = errors.New("purchase return cannot be completed in its current status")
+	ErrPurchaseReturnCannotCancel   = errors.New("purchase return cannot be cancelled in its current status")
+	ErrExceedsReturnableQuantity    = errors.New("return quantity exceeds available received quantity")
+	ErrInvalidPOStatusForReturn     = errors.New("purchase order is not in a valid status for return")
 )

@@ -427,6 +427,84 @@ ALTER TABLE ONLY public.vendor_bill_items
     ADD CONSTRAINT vendor_bill_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
 
 --
+-- Name: purchase_returns; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.purchase_returns (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    return_number character varying(50) NOT NULL,
+    purchase_order_id uuid NOT NULL,
+    goods_receipt_id uuid,
+    vendor_id uuid NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    return_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_return_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    reason text NOT NULL,
+    carrier character varying(100),
+    tracking_number character varying(100),
+    created_by uuid NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT purchase_returns_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'approved'::character varying, 'shipped'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))),
+    CONSTRAINT purchase_returns_total_amount_check CHECK ((total_return_amount >= (0)::numeric))
+);
+
+ALTER TABLE public.purchase_returns OWNER TO postgres;
+
+--
+-- Name: purchase_return_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.purchase_return_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    purchase_return_id uuid NOT NULL,
+    purchase_order_item_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    description text NOT NULL,
+    return_quantity numeric(18,3) NOT NULL,
+    unit_price numeric(18,2) NOT NULL,
+    total_price numeric(18,2) NOT NULL,
+    reason text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT purchase_return_items_return_quantity_check CHECK ((return_quantity > (0)::numeric)),
+    CONSTRAINT purchase_return_items_unit_price_check CHECK ((unit_price >= (0)::numeric)),
+    CONSTRAINT purchase_return_items_total_price_check CHECK ((total_price >= (0)::numeric))
+);
+
+ALTER TABLE public.purchase_return_items OWNER TO postgres;
+
+ALTER TABLE ONLY public.purchase_returns
+    ADD CONSTRAINT purchase_returns_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.purchase_returns
+    ADD CONSTRAINT purchase_returns_return_number_key UNIQUE (return_number);
+
+ALTER TABLE ONLY public.purchase_return_items
+    ADD CONSTRAINT purchase_return_items_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_purchase_returns_po_id ON public.purchase_returns USING btree (purchase_order_id);
+CREATE INDEX idx_purchase_returns_grn_id ON public.purchase_returns USING btree (goods_receipt_id);
+CREATE INDEX idx_purchase_returns_vendor_id ON public.purchase_returns USING btree (vendor_id);
+CREATE INDEX idx_purchase_returns_status ON public.purchase_returns USING btree (status);
+CREATE INDEX idx_purchase_returns_return_date ON public.purchase_returns USING btree (return_date);
+CREATE INDEX idx_purchase_return_items_return_id ON public.purchase_return_items USING btree (purchase_return_id);
+CREATE INDEX idx_purchase_return_items_po_item_id ON public.purchase_return_items USING btree (purchase_order_item_id);
+CREATE INDEX idx_purchase_return_items_item_id ON public.purchase_return_items USING btree (item_id);
+
+ALTER TABLE ONLY public.purchase_returns
+    ADD CONSTRAINT purchase_returns_purchase_order_fk FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.purchase_returns
+    ADD CONSTRAINT purchase_returns_goods_receipt_fk FOREIGN KEY (goods_receipt_id) REFERENCES public.goods_receipts(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.purchase_return_items
+    ADD CONSTRAINT purchase_return_items_return_fk FOREIGN KEY (purchase_return_id) REFERENCES public.purchase_returns(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.purchase_return_items
+    ADD CONSTRAINT purchase_return_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
+
+--
 -- PostgreSQL database dump complete
 --
 
