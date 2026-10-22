@@ -13,13 +13,13 @@ import (
 )
 
 type mockPurchaseOrderRepository struct {
-	createdOrder *domain.PurchaseOrder
-	getOrder     *domain.PurchaseOrder
-	updatedOrder *domain.PurchaseOrder
+	createdOrder  *domain.PurchaseOrder
+	getOrder      *domain.PurchaseOrder
+	updatedOrder  *domain.PurchaseOrder
 	updatedStatus domain.PurchaseOrderStatus
-	getErr       error
-	createErr    error
-	updateErr    error
+	getErr        error
+	createErr     error
+	updateErr     error
 }
 
 func (m *mockPurchaseOrderRepository) CreatePurchaseOrder(

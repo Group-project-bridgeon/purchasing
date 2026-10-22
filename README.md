@@ -274,30 +274,34 @@ The service is configured via environment variables or a `.env` file in the root
 ## 8. Development & Operations Guide
 
 ### Prerequisites
-- Go `1.24+` (compiled with Go `1.27.1`)
-- PostgreSQL `14+`
+- Go `1.24+` (or system Go compiler)
+- PostgreSQL `14+` or Docker
 - [sqlc](https://sqlc.dev/) (`go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`)
 
-### Compile and Build
-```bash
-go build ./...
-```
+### Developer Makefile Commands
+A top-level `Makefile` is provided for standard developer workflows:
 
-### Run All Unit Tests
-```bash
-go test -v ./internal/service/...
-```
+| Target | Description | Command |
+|---|---|---|
+| `make help` | Display available targets and descriptions | `make help` |
+| `make run` | Run service locally with `.env` | `go run ./cmd/server` |
+| `make build` | Compile optimized Linux binary into `bin/purchasing` | `CGO_ENABLED=0 go build ...` |
+| `make test` | Run fast unit test suite | `go test -v -count=1 ./internal/service/...` |
+| `make test-all` | Run all tests including DB integration tests | `go test -v -count=1 ./...` |
+| `make test-coverage`| Run unit tests and generate HTML coverage report | `go test -coverprofile=...` |
+| `make vet` | Run static code analysis with `go vet` | `go vet ./...` |
+| `make fmt` | Format all Go source files | `go fmt ./...` |
+| `make sqlc` | Regenerate type-safe queries using `sqlc` | `sqlc generate` |
+| `make clean` | Clean compiled binaries and test reports | `rm -rf bin/ coverage.*` |
+| `make docker-up` | Build & start the full service stack (App + Postgres) | `docker compose up -d --build` |
+| `make docker-down`| Stop all containers and networks | `docker compose down` |
+| `make docker-logs`| Tail logs of `purchasing-service` | `docker compose logs -f purchasing-service` |
+| `make db-up` | Start PostgreSQL container only for local dev | `docker compose up -d postgres` |
+| `make db-shell` | Open interactive `psql` shell in Postgres | `docker compose exec postgres psql ...` |
 
-### Regenerate SQL Queries with sqlc
+### Running with Docker Compose
+To run the full stack (PostgreSQL + Purchasing Service with embedded auto-migrations):
 ```bash
-/home/yadu/go/bin/sqlc generate
+docker compose up -d --build
 ```
-
-### Run the Server
-```bash
-go run cmd/server/main.go
-```
-The server will start listening on the configured port:
-```text
-purchasing service running on :8080
-```
+The server will start listening on port `8080` once PostgreSQL is healthy and auto-migrations have completed.

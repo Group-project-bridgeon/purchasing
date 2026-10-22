@@ -40,15 +40,15 @@ type PurchaseOrder struct {
 }
 
 type PurchaseOrderItem struct {
-	ID                string
-	PurchaseOrderID   string
-	ItemID            string
-	Description       string
-	Quantity          decimal.Decimal
-	UnitPrice         decimal.Decimal
-	TaxRate           decimal.Decimal
-	TotalPrice        decimal.Decimal
-	ReceivedQuantity  decimal.Decimal
-	BilledQuantity    decimal.Decimal
-	CreatedAt         time.Time
+	ID               string
+	PurchaseOrderID  string
+	ItemID           string
+	Description      string
+	Quantity         decimal.Decimal
+	UnitPrice        decimal.Decimal
+	TaxRate          decimal.Decimal
+	TotalPrice       decimal.Decimal
+	ReceivedQuantity decimal.Decimal
+	BilledQuantity   decimal.Decimal
+	CreatedAt        time.Time
 }

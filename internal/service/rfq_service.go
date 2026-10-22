@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	rfqDocumentType           = "rfq"
-	rfqPurchaseOrderDocType   = "purchase_order"
+	rfqDocumentType         = "rfq"
+	rfqPurchaseOrderDocType = "purchase_order"
 )
 
 type CreateRFQItemInput struct {

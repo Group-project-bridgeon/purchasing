@@ -35,13 +35,13 @@ type GoodsReceiptResponse struct {
 }
 
 type GoodsReceiptItemResponse struct {
-	ID                  string  `json:"id"`
-	GoodsReceiptID      string  `json:"goods_receipt_id"`
-	PurchaseOrderItemID string  `json:"purchase_order_item_id"`
-	ItemID              string  `json:"item_id"`
-	ReceivedQuantity    string  `json:"received_quantity"`
-	RejectedQuantity    string  `json:"rejected_quantity"`
-	RejectionReason     *string `json:"rejection_reason,omitempty"`
+	ID                  string    `json:"id"`
+	GoodsReceiptID      string    `json:"goods_receipt_id"`
+	PurchaseOrderItemID string    `json:"purchase_order_item_id"`
+	ItemID              string    `json:"item_id"`
+	ReceivedQuantity    string    `json:"received_quantity"`
+	RejectedQuantity    string    `json:"rejected_quantity"`
+	RejectionReason     *string   `json:"rejection_reason,omitempty"`
 	CreatedAt           time.Time `json:"created_at"`
 }
 

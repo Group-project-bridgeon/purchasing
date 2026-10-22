@@ -78,8 +78,8 @@ type ListVendorBillsResponse struct {
 }
 
 type MatchBillResponse struct {
-	VendorBill   VendorBillResponse       `json:"vendor_bill"`
-	Items        []VendorBillItemResponse `json:"items"`
-	IsMatched    bool                     `json:"is_matched"`
-	Discrepancies []string                `json:"discrepancies,omitempty"`
+	VendorBill    VendorBillResponse       `json:"vendor_bill"`
+	Items         []VendorBillItemResponse `json:"items"`
+	IsMatched     bool                     `json:"is_matched"`
+	Discrepancies []string                 `json:"discrepancies,omitempty"`
 }

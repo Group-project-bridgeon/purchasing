@@ -8,7 +8,7 @@ type VendorScorecard struct {
 	VendorID              string
 	TotalOrders           int64
 	TotalCommittedSpend   decimal.Decimal
-	TotalInvoicedSpend     decimal.Decimal
+	TotalInvoicedSpend    decimal.Decimal
 	TotalReceipts         int64
 	OnTimeReceipts        int64
 	OnTimeDeliveryRate    decimal.Decimal

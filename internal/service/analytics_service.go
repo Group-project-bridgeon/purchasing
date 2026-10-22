@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	hundred = decimal.NewFromInt(100)
+	hundred       = decimal.NewFromInt(100)
 	weightOTIF    = decimal.NewFromFloat(0.40)
 	weightQuality = decimal.NewFromFloat(0.35)
 	weightBilling = decimal.NewFromFloat(0.15)
@@ -160,7 +160,7 @@ func (s *analyticsService) GetVendorScorecard(
 		VendorID:              vendorID,
 		TotalOrders:           orderSummary.TotalOrders,
 		TotalCommittedSpend:   orderSummary.TotalCommittedAmount,
-		TotalInvoicedSpend:     billingMetrics.TotalInvoicedAmount,
+		TotalInvoicedSpend:    billingMetrics.TotalInvoicedAmount,
 		TotalReceipts:         deliveryMetrics.TotalReceipts,
 		OnTimeReceipts:        deliveryMetrics.OnTimeReceipts,
 		OnTimeDeliveryRate:    onTimeRate.Round(2),

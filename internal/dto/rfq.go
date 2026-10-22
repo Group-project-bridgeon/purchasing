@@ -131,10 +131,10 @@ type VendorQuotationDetailResponse struct {
 }
 
 type QuotationComparisonMatrixResponse struct {
-	RFQID                       string                    `json:"rfq_id"`
-	LowestBidQuotationID        *string                   `json:"lowest_bid_quotation_id,omitempty"`
-	FastestLeadTimeQuotationID  *string                   `json:"fastest_lead_time_quotation_id,omitempty"`
-	Quotations                  []VendorQuotationResponse `json:"quotations"`
+	RFQID                      string                    `json:"rfq_id"`
+	LowestBidQuotationID       *string                   `json:"lowest_bid_quotation_id,omitempty"`
+	FastestLeadTimeQuotationID *string                   `json:"fastest_lead_time_quotation_id,omitempty"`
+	Quotations                 []VendorQuotationResponse `json:"quotations"`
 }
 
 type AwardQuotationResponse struct {

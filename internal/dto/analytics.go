@@ -4,7 +4,7 @@ type VendorScorecardResponse struct {
 	VendorID              string `json:"vendor_id"`
 	TotalOrders           int64  `json:"total_orders"`
 	TotalCommittedSpend   string `json:"total_committed_spend"`
-	TotalInvoicedSpend     string `json:"total_invoiced_spend"`
+	TotalInvoicedSpend    string `json:"total_invoiced_spend"`
 	TotalReceipts         int64  `json:"total_receipts"`
 	OnTimeReceipts        int64  `json:"on_time_receipts"`
 	OnTimeDeliveryRate    string `json:"on_time_delivery_rate"`

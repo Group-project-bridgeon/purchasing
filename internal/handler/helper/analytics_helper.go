@@ -43,7 +43,7 @@ func MapScorecardToResponse(sc *domain.VendorScorecard) dto.VendorScorecardRespo
 		VendorID:              sc.VendorID,
 		TotalOrders:           sc.TotalOrders,
 		TotalCommittedSpend:   sc.TotalCommittedSpend.StringFixed(2),
-		TotalInvoicedSpend:     sc.TotalInvoicedSpend.StringFixed(2),
+		TotalInvoicedSpend:    sc.TotalInvoicedSpend.StringFixed(2),
 		TotalReceipts:         sc.TotalReceipts,
 		OnTimeReceipts:        sc.OnTimeReceipts,
 		OnTimeDeliveryRate:    sc.OnTimeDeliveryRate.StringFixed(2),

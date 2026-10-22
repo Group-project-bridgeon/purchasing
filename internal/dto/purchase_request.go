@@ -63,8 +63,8 @@ type UpdatePurchaseRequestBody struct {
 }
 
 type UpdatePurchaseRequestItemBody struct {
-    ItemID             string  `json:"item_id"`
-    Description        string  `json:"description"`
-    Quantity           string  `json:"quantity"`
-    EstimatedUnitPrice *string `json:"estimated_unit_price"`
+	ItemID             string  `json:"item_id"`
+	Description        string  `json:"description"`
+	Quantity           string  `json:"quantity"`
+	EstimatedUnitPrice *string `json:"estimated_unit_price"`
 }

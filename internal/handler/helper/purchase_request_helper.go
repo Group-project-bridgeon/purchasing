@@ -169,7 +169,7 @@ func ToPurchaseRequestResponse(
 			RequestedAt:   request.RequestedAt,
 			RequiredBy:    request.RequiredBy,
 			Purpose:       request.Purpose,
-			Notes:          request.Notes,
+			Notes:         request.Notes,
 			CreatedAt:     request.CreatedAt,
 			UpdatedAt:     request.UpdatedAt,
 		},

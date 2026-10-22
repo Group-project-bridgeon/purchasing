@@ -132,7 +132,7 @@ func TestGetVendorScorecard_Calculations(t *testing.T) {
 		},
 		deliveryMetrics: &repository.VendorDeliveryRawMetrics{
 			TotalReceipts:     10,
-			OnTimeReceipts:    8,  // 80% on-time
+			OnTimeReceipts:    8, // 80% on-time
 			TotalOrderedItems: 20,
 			FulfilledItems:    18, // 90% in-full
 			TotalReceivedQty:  decimal.NewFromInt(1000),
