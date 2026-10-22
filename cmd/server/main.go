@@ -6,6 +6,7 @@ import (
 
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/database"
+	"github.com/Group-project-bridgeon/purchasing/internal/docs"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
 	"github.com/Group-project-bridgeon/purchasing/internal/service"
@@ -217,6 +218,9 @@ func main() {
 
 	// Create Fiber application.
 	app := fiber.New()
+
+	// Register Swagger UI, OpenAPI spec, and healthcheck routes.
+	docs.RegisterRoutes(app)
 
 	// Purchase Request routes.
 	app.Post(

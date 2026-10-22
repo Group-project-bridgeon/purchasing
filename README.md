@@ -80,6 +80,15 @@ Migrations are located in `db/migrations/`:
 
 ## 4. REST API Reference
 
+### 4.0 Interactive Documentation & Health Checks
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/docs` or `/swagger` | Interactive Swagger UI API explorer |
+| `GET` | `/docs/openapi.json` | Full OpenAPI 3.0.3 machine-readable JSON specification |
+| `GET` | `/health` | Kubernetes / Docker liveness healthcheck (`{"status":"ok"}`) |
+| `GET` | `/api/v1/health` | API version healthcheck |
+
 ### 4.1 Purchase Requests (`/api/v1/purchase-requests`)
 
 | Method | Endpoint | Description |
