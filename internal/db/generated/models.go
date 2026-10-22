@@ -126,6 +126,29 @@ type PurchaseReturnItem struct {
 	CreatedAt           pgtype.Timestamptz `json:"created_at"`
 }
 
+type Rfq struct {
+	ID                 pgtype.UUID        `json:"id"`
+	RfqNumber          string             `json:"rfq_number"`
+	PurchaseRequestID  pgtype.UUID        `json:"purchase_request_id"`
+	Title              string             `json:"title"`
+	Status             string             `json:"status"`
+	SubmissionDeadline pgtype.Timestamptz `json:"submission_deadline"`
+	CreatedBy          pgtype.UUID        `json:"created_by"`
+	Notes              pgtype.Text        `json:"notes"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RfqItem struct {
+	ID                 pgtype.UUID        `json:"id"`
+	RfqID              pgtype.UUID        `json:"rfq_id"`
+	ItemID             pgtype.UUID        `json:"item_id"`
+	Description        string             `json:"description"`
+	TargetQuantity     pgtype.Numeric     `json:"target_quantity"`
+	TargetDeliveryDate pgtype.Date        `json:"target_delivery_date"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+}
+
 type SchemaMigration struct {
 	Version int64 `json:"version"`
 	Dirty   bool  `json:"dirty"`
@@ -164,4 +187,37 @@ type VendorBillItem struct {
 	MatchedQuantity     pgtype.Numeric     `json:"matched_quantity"`
 	MatchStatus         string             `json:"match_status"`
 	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+}
+
+type VendorQuotation struct {
+	ID             pgtype.UUID        `json:"id"`
+	RfqID          pgtype.UUID        `json:"rfq_id"`
+	VendorID       pgtype.UUID        `json:"vendor_id"`
+	QuoteReference string             `json:"quote_reference"`
+	QuotationDate  pgtype.Date        `json:"quotation_date"`
+	ValidUntil     pgtype.Date        `json:"valid_until"`
+	Currency       string             `json:"currency"`
+	Subtotal       pgtype.Numeric     `json:"subtotal"`
+	TaxAmount      pgtype.Numeric     `json:"tax_amount"`
+	TotalAmount    pgtype.Numeric     `json:"total_amount"`
+	PaymentTerms   pgtype.Text        `json:"payment_terms"`
+	LeadTimeDays   int32              `json:"lead_time_days"`
+	Status         string             `json:"status"`
+	Notes          pgtype.Text        `json:"notes"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type VendorQuotationItem struct {
+	ID                pgtype.UUID        `json:"id"`
+	VendorQuotationID pgtype.UUID        `json:"vendor_quotation_id"`
+	RfqItemID         pgtype.UUID        `json:"rfq_item_id"`
+	ItemID            pgtype.UUID        `json:"item_id"`
+	Description       string             `json:"description"`
+	OfferedQuantity   pgtype.Numeric     `json:"offered_quantity"`
+	UnitPrice         pgtype.Numeric     `json:"unit_price"`
+	TaxRate           pgtype.Numeric     `json:"tax_rate"`
+	TotalPrice        pgtype.Numeric     `json:"total_price"`
+	LeadTimeDays      pgtype.Int4        `json:"lead_time_days"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }

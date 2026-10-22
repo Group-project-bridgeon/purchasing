@@ -157,6 +157,43 @@ func main() {
 			purchaseReturnService,
 		)
 
+	// Create RFQ repositories.
+	rfqRepository :=
+		repository.NewPostgresRFQRepository(db)
+
+	rfqItemRepository :=
+		repository.NewPostgresRFQItemRepository(db)
+
+	vendorQuotationRepository :=
+		repository.NewPostgresVendorQuotationRepository(db)
+
+	vendorQuotationItemRepository :=
+		repository.NewPostgresVendorQuotationItemRepository(db)
+
+	rfqTxManager :=
+		repository.NewPostgresRFQTransactionManager(db)
+
+	// Create RFQ service.
+	rfqService :=
+		service.NewRFQService(
+			rfqRepository,
+			rfqItemRepository,
+			vendorQuotationRepository,
+			vendorQuotationItemRepository,
+			purchaseOrderRepository,
+			purchaseOrderItemRepository,
+			purchaseRequestRepository,
+			purchaseRequestItemRepository,
+			documentNumberRepository,
+			rfqTxManager,
+		)
+
+	// Create RFQ handler.
+	rfqHandler :=
+		handler.NewRFQHandler(
+			rfqService,
+		)
+
 	// Create Fiber application.
 	app := fiber.New()
 
@@ -385,6 +422,77 @@ func main() {
 	app.Post(
 		"/api/v1/purchase-returns/:id/cancel",
 		purchaseReturnHandler.Cancel,
+	)
+
+	// RFQ routes.
+	app.Post(
+		"/api/v1/rfqs",
+		rfqHandler.Create,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/from-request/:prId",
+		rfqHandler.CreateFromPR,
+	)
+
+	app.Get(
+		"/api/v1/rfqs",
+		rfqHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/rfqs/:id",
+		rfqHandler.GetByID,
+	)
+
+	app.Get(
+		"/api/v1/rfqs/number/:rfqNumber",
+		rfqHandler.GetByNumber,
+	)
+
+	app.Put(
+		"/api/v1/rfqs/:id",
+		rfqHandler.Update,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/:id/publish",
+		rfqHandler.Publish,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/:id/close",
+		rfqHandler.Close,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/:id/cancel",
+		rfqHandler.Cancel,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/:id/quotations",
+		rfqHandler.SubmitQuotation,
+	)
+
+	app.Get(
+		"/api/v1/rfqs/:id/quotations",
+		rfqHandler.ListQuotations,
+	)
+
+	app.Get(
+		"/api/v1/rfqs/:id/quotations/:quotationId",
+		rfqHandler.GetQuotationByID,
+	)
+
+	app.Get(
+		"/api/v1/rfqs/:id/compare",
+		rfqHandler.Compare,
+	)
+
+	app.Post(
+		"/api/v1/rfqs/:id/award/:quotationId",
+		rfqHandler.Award,
 	)
 
 	// Start server.

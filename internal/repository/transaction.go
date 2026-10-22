@@ -316,3 +316,82 @@ func (m *postgresPurchaseReturnTransactionManager) WithinTransaction(
 
 	return tx.Commit(ctx)
 }
+
+type RFQTransactionManager interface {
+	WithinTransaction(
+		ctx context.Context,
+		fn func(
+			RFQRepository,
+			RFQItemRepository,
+			VendorQuotationRepository,
+			VendorQuotationItemRepository,
+			PurchaseOrderRepository,
+			PurchaseOrderItemRepository,
+			DocumentNumberRepository,
+			PurchaseRequestRepository,
+			PurchaseRequestItemRepository,
+		) error,
+	) error
+}
+
+type postgresRFQTransactionManager struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresRFQTransactionManager(
+	db *pgxpool.Pool,
+) RFQTransactionManager {
+	return &postgresRFQTransactionManager{
+		db: db,
+	}
+}
+
+func (m *postgresRFQTransactionManager) WithinTransaction(
+	ctx context.Context,
+	fn func(
+		RFQRepository,
+		RFQItemRepository,
+		VendorQuotationRepository,
+		VendorQuotationItemRepository,
+		PurchaseOrderRepository,
+		PurchaseOrderItemRepository,
+		DocumentNumberRepository,
+		PurchaseRequestRepository,
+		PurchaseRequestItemRepository,
+	) error,
+) error {
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	rfqRepo := NewPostgresRFQRepositoryWithTx(tx)
+	rfqItemRepo := NewPostgresRFQItemRepositoryWithTx(tx)
+	quotationRepo := NewPostgresVendorQuotationRepositoryWithTx(tx)
+	quotationItemRepo := NewPostgresVendorQuotationItemRepositoryWithTx(tx)
+	poRepo := NewPostgresPurchaseOrderRepositoryWithTx(tx)
+	poItemRepo := NewPostgresPurchaseOrderItemRepositoryWithTx(tx)
+	docNumRepo := NewPostgresDocumentNumberRepositoryWithTx(tx)
+	prRepo := NewPostgresPurchaseRequestRepositoryWithTx(tx)
+	prItemRepo := NewPostgresPurchaseRequestItemRepositoryWithTx(tx)
+
+	if err := fn(
+		rfqRepo,
+		rfqItemRepo,
+		quotationRepo,
+		quotationItemRepo,
+		poRepo,
+		poItemRepo,
+		docNumRepo,
+		prRepo,
+		prItemRepo,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}

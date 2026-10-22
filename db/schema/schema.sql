@@ -505,6 +505,141 @@ ALTER TABLE ONLY public.purchase_return_items
     ADD CONSTRAINT purchase_return_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
 
 --
+-- Name: rfqs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rfqs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    rfq_number character varying(50) NOT NULL,
+    purchase_request_id uuid,
+    title character varying(255) NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    submission_deadline timestamp with time zone NOT NULL,
+    created_by uuid NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT rfqs_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'closed'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+ALTER TABLE public.rfqs OWNER TO postgres;
+
+--
+-- Name: rfq_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rfq_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    rfq_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    description text NOT NULL,
+    target_quantity numeric(18,3) NOT NULL,
+    target_delivery_date date,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT rfq_items_target_quantity_check CHECK ((target_quantity > (0)::numeric))
+);
+
+ALTER TABLE public.rfq_items OWNER TO postgres;
+
+--
+-- Name: vendor_quotations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vendor_quotations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    rfq_id uuid NOT NULL,
+    vendor_id uuid NOT NULL,
+    quote_reference character varying(100) NOT NULL,
+    quotation_date date DEFAULT CURRENT_DATE NOT NULL,
+    valid_until date NOT NULL,
+    currency character varying(3) DEFAULT 'USD'::character varying NOT NULL,
+    subtotal numeric(18,2) DEFAULT 0 NOT NULL,
+    tax_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    total_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    payment_terms character varying(100),
+    lead_time_days integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'submitted'::character varying NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT vendor_quotations_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'submitted'::character varying, 'awarded'::character varying, 'rejected'::character varying])::text[]))),
+    CONSTRAINT vendor_quotations_subtotal_check CHECK ((subtotal >= (0)::numeric)),
+    CONSTRAINT vendor_quotations_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
+    CONSTRAINT vendor_quotations_total_amount_check CHECK ((total_amount >= (0)::numeric)),
+    CONSTRAINT vendor_quotations_lead_time_check CHECK ((lead_time_days >= 0))
+);
+
+ALTER TABLE public.vendor_quotations OWNER TO postgres;
+
+--
+-- Name: vendor_quotation_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vendor_quotation_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    vendor_quotation_id uuid NOT NULL,
+    rfq_item_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    description text NOT NULL,
+    offered_quantity numeric(18,3) NOT NULL,
+    unit_price numeric(18,2) NOT NULL,
+    tax_rate numeric(5,2) DEFAULT 0 NOT NULL,
+    total_price numeric(18,2) NOT NULL,
+    lead_time_days integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT vendor_quotation_items_offered_quantity_check CHECK ((offered_quantity > (0)::numeric)),
+    CONSTRAINT vendor_quotation_items_unit_price_check CHECK ((unit_price >= (0)::numeric)),
+    CONSTRAINT vendor_quotation_items_tax_rate_check CHECK ((tax_rate >= (0)::numeric)),
+    CONSTRAINT vendor_quotation_items_total_price_check CHECK ((total_price >= (0)::numeric)),
+    CONSTRAINT vendor_quotation_items_lead_time_check CHECK ((lead_time_days >= 0))
+);
+
+ALTER TABLE public.vendor_quotation_items OWNER TO postgres;
+
+ALTER TABLE ONLY public.rfqs
+    ADD CONSTRAINT rfqs_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.rfqs
+    ADD CONSTRAINT rfqs_rfq_number_key UNIQUE (rfq_number);
+
+ALTER TABLE ONLY public.rfq_items
+    ADD CONSTRAINT rfq_items_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.vendor_quotations
+    ADD CONSTRAINT vendor_quotations_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.vendor_quotations
+    ADD CONSTRAINT vendor_quotations_rfq_vendor_unique UNIQUE (rfq_id, vendor_id, quote_reference);
+
+ALTER TABLE ONLY public.vendor_quotation_items
+    ADD CONSTRAINT vendor_quotation_items_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_rfqs_status ON public.rfqs USING btree (status);
+CREATE INDEX idx_rfqs_purchase_request_id ON public.rfqs USING btree (purchase_request_id);
+CREATE INDEX idx_rfqs_submission_deadline ON public.rfqs USING btree (submission_deadline);
+CREATE INDEX idx_rfq_items_rfq_id ON public.rfq_items USING btree (rfq_id);
+CREATE INDEX idx_vendor_quotations_rfq_id ON public.vendor_quotations USING btree (rfq_id);
+CREATE INDEX idx_vendor_quotations_vendor_id ON public.vendor_quotations USING btree (vendor_id);
+CREATE INDEX idx_vendor_quotations_status ON public.vendor_quotations USING btree (status);
+CREATE INDEX idx_vendor_quotation_items_quotation_id ON public.vendor_quotation_items USING btree (vendor_quotation_id);
+CREATE INDEX idx_vendor_quotation_items_rfq_item_id ON public.vendor_quotation_items USING btree (rfq_item_id);
+
+ALTER TABLE ONLY public.rfqs
+    ADD CONSTRAINT rfqs_purchase_request_fk FOREIGN KEY (purchase_request_id) REFERENCES public.purchase_requests(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.rfq_items
+    ADD CONSTRAINT rfq_items_rfq_fk FOREIGN KEY (rfq_id) REFERENCES public.rfqs(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.vendor_quotations
+    ADD CONSTRAINT vendor_quotations_rfq_fk FOREIGN KEY (rfq_id) REFERENCES public.rfqs(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.vendor_quotation_items
+    ADD CONSTRAINT vendor_quotation_items_quotation_fk FOREIGN KEY (vendor_quotation_id) REFERENCES public.vendor_quotations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.vendor_quotation_items
+    ADD CONSTRAINT vendor_quotation_items_rfq_item_fk FOREIGN KEY (rfq_item_id) REFERENCES public.rfq_items(id) ON DELETE RESTRICT;
+
+--
 -- PostgreSQL database dump complete
 --
 
