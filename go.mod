@@ -6,6 +6,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/shopspring/decimal v1.5.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

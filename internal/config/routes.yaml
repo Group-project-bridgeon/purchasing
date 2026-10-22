@@ -1,0 +1,74 @@
+# ==============================================================================
+# ERP Purchasing Microservice - Route Configurations
+# ==============================================================================
+
+version: "v1"
+api_prefix: "/api/v1"
+
+system:
+  health: "/health"
+  api_health: "/api/v1/health"
+  docs: "/docs"
+  swagger: "/swagger"
+  openapi: "/docs/openapi.json"
+
+purchase_requests:
+  base: "/purchase-requests"
+  by_id: "/purchase-requests/:id"
+  submit: "/purchase-requests/:id/submit"
+  approve: "/purchase-requests/:id/approve"
+  reject: "/purchase-requests/:id/reject"
+  items: "/purchase-requests/:id/items"
+  item_by_id: "/purchase-requests/:id/items/:itemId"
+
+purchase_orders:
+  base: "/purchase-orders"
+  from_request: "/purchase-orders/from-request/:prId"
+  by_id: "/purchase-orders/:id"
+  approve: "/purchase-orders/:id/approve"
+  issue: "/purchase-orders/:id/issue"
+  cancel: "/purchase-orders/:id/cancel"
+  items: "/purchase-orders/:id/items"
+  item_by_id: "/purchase-orders/:id/items/:itemId"
+  goods_receipts: "/purchase-orders/:id/goods-receipts"
+  vendor_bills: "/purchase-orders/:id/vendor-bills"
+
+goods_receipts:
+  base: "/goods-receipts"
+  by_id: "/goods-receipts/:id"
+  cancel: "/goods-receipts/:id/cancel"
+
+vendor_bills:
+  base: "/vendor-bills"
+  by_id: "/vendor-bills/:id"
+  match: "/vendor-bills/:id/match"
+  approve: "/vendor-bills/:id/approve"
+  cancel: "/vendor-bills/:id/cancel"
+
+purchase_returns:
+  base: "/purchase-returns"
+  by_id: "/purchase-returns/:id"
+  by_number: "/purchase-returns/number/:returnNumber"
+  approve: "/purchase-returns/:id/approve"
+  ship: "/purchase-returns/:id/ship"
+  complete: "/purchase-returns/:id/complete"
+  cancel: "/purchase-returns/:id/cancel"
+
+rfqs:
+  base: "/rfqs"
+  from_request: "/rfqs/from-request/:prId"
+  by_id: "/rfqs/:id"
+  by_number: "/rfqs/number/:rfqNumber"
+  publish: "/rfqs/:id/publish"
+  close: "/rfqs/:id/close"
+  cancel: "/rfqs/:id/cancel"
+  quotations: "/rfqs/:id/quotations"
+  quotation_by_id: "/rfqs/:id/quotations/:quotationId"
+  compare: "/rfqs/:id/compare"
+  award: "/rfqs/:id/award/:quotationId"
+
+analytics:
+  vendor_scorecard: "/analytics/vendors/:vendorId/scorecard"
+  vendor_performance: "/analytics/vendors/performance"
+  dashboard_kpis: "/analytics/dashboard/kpis"
+  spend_by_vendor: "/analytics/spend/by-vendor"
