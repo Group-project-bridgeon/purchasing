@@ -20,4 +20,11 @@ var (
 	ErrInvalidPOStatusForReceiving   = errors.New("purchase order is not in a valid status for receiving")
 	ErrExceedsOrderedQuantity        = errors.New("received quantity exceeds remaining ordered quantity")
 	ErrGoodsReceiptCannotCancel      = errors.New("goods receipt cannot be cancelled in its current status")
+
+	ErrVendorBillNotFound       = errors.New("vendor bill not found")
+	ErrVendorBillNotEditable    = errors.New("vendor bill cannot be updated in its current status")
+	ErrVendorBillCannotApprove  = errors.New("vendor bill must be matched before it can be approved")
+	ErrVendorBillCannotCancel   = errors.New("vendor bill cannot be cancelled in its current status")
+	ErrDuplicateVendorInvoice   = errors.New("an invoice with this bill number already exists for this vendor")
+	ErrInvalidPOStatusForBilling = errors.New("purchase order is not in a valid status for billing")
 )

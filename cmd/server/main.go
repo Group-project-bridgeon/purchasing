@@ -103,6 +103,30 @@ func main() {
 			goodsReceiptService,
 		)
 
+	// Create Vendor Bill repositories.
+	vendorBillRepository :=
+		repository.NewPostgresVendorBillRepository(db)
+
+	vendorBillItemRepository :=
+		repository.NewPostgresVendorBillItemRepository(db)
+
+	billTransactionManager :=
+		repository.NewPostgresVendorBillTransactionManager(db)
+
+	// Create Vendor Bill service.
+	vendorBillService :=
+		service.NewVendorBillService(
+			vendorBillRepository,
+			vendorBillItemRepository,
+			billTransactionManager,
+		)
+
+	// Create Vendor Bill handler.
+	vendorBillHandler :=
+		handler.NewVendorBillHandler(
+			vendorBillService,
+		)
+
 	// Create Fiber application.
 	app := fiber.New()
 
@@ -249,6 +273,42 @@ func main() {
 	app.Get(
 		"/api/v1/purchase-orders/:id/goods-receipts",
 		goodsReceiptHandler.ListByPO,
+	)
+
+	// Vendor Bill routes.
+	app.Post(
+		"/api/v1/vendor-bills",
+		vendorBillHandler.Create,
+	)
+
+	app.Get(
+		"/api/v1/vendor-bills",
+		vendorBillHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/vendor-bills/:id",
+		vendorBillHandler.GetByID,
+	)
+
+	app.Post(
+		"/api/v1/vendor-bills/:id/match",
+		vendorBillHandler.Match,
+	)
+
+	app.Post(
+		"/api/v1/vendor-bills/:id/approve",
+		vendorBillHandler.Approve,
+	)
+
+	app.Post(
+		"/api/v1/vendor-bills/:id/cancel",
+		vendorBillHandler.Cancel,
+	)
+
+	app.Get(
+		"/api/v1/purchase-orders/:id/vendor-bills",
+		vendorBillHandler.ListByPO,
 	)
 
 	// Start server.

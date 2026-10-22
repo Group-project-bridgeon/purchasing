@@ -99,3 +99,38 @@ type SchemaMigration struct {
 	Version int64 `json:"version"`
 	Dirty   bool  `json:"dirty"`
 }
+
+type VendorBill struct {
+	ID                 pgtype.UUID        `json:"id"`
+	InternalBillNumber string             `json:"internal_bill_number"`
+	BillNumber         string             `json:"bill_number"`
+	PurchaseOrderID    pgtype.UUID        `json:"purchase_order_id"`
+	VendorID           pgtype.UUID        `json:"vendor_id"`
+	BillDate           pgtype.Date        `json:"bill_date"`
+	DueDate            pgtype.Date        `json:"due_date"`
+	Currency           string             `json:"currency"`
+	Subtotal           pgtype.Numeric     `json:"subtotal"`
+	TaxAmount          pgtype.Numeric     `json:"tax_amount"`
+	TotalAmount        pgtype.Numeric     `json:"total_amount"`
+	MatchStatus        string             `json:"match_status"`
+	Status             string             `json:"status"`
+	DiscrepancyReason  pgtype.Text        `json:"discrepancy_reason"`
+	Notes              pgtype.Text        `json:"notes"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type VendorBillItem struct {
+	ID                  pgtype.UUID        `json:"id"`
+	VendorBillID        pgtype.UUID        `json:"vendor_bill_id"`
+	PurchaseOrderItemID pgtype.UUID        `json:"purchase_order_item_id"`
+	ItemID              pgtype.UUID        `json:"item_id"`
+	Description         string             `json:"description"`
+	Quantity            pgtype.Numeric     `json:"quantity"`
+	UnitPrice           pgtype.Numeric     `json:"unit_price"`
+	TaxRate             pgtype.Numeric     `json:"tax_rate"`
+	TotalPrice          pgtype.Numeric     `json:"total_price"`
+	MatchedQuantity     pgtype.Numeric     `json:"matched_quantity"`
+	MatchStatus         string             `json:"match_status"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+}

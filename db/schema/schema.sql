@@ -339,6 +339,94 @@ ALTER TABLE ONLY public.goods_receipt_items
     ADD CONSTRAINT goods_receipt_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
 
 --
+-- Name: vendor_bills; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vendor_bills (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    internal_bill_number character varying(50) NOT NULL,
+    bill_number character varying(100) NOT NULL,
+    purchase_order_id uuid NOT NULL,
+    vendor_id uuid NOT NULL,
+    bill_date date NOT NULL,
+    due_date date,
+    currency character varying(3) DEFAULT 'USD'::character varying NOT NULL,
+    subtotal numeric(18,2) DEFAULT 0 NOT NULL,
+    tax_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    total_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    match_status character varying(20) DEFAULT 'unmatched'::character varying NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    discrepancy_reason text,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT vendor_bills_match_status_check CHECK (((match_status)::text = ANY ((ARRAY['unmatched'::character varying, 'matched'::character varying, 'discrepant'::character varying])::text[]))),
+    CONSTRAINT vendor_bills_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'approved'::character varying, 'paid'::character varying, 'cancelled'::character varying])::text[]))),
+    CONSTRAINT vendor_bills_subtotal_check CHECK ((subtotal >= (0)::numeric)),
+    CONSTRAINT vendor_bills_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
+    CONSTRAINT vendor_bills_total_amount_check CHECK ((total_amount >= (0)::numeric))
+);
+
+ALTER TABLE public.vendor_bills OWNER TO postgres;
+
+--
+-- Name: vendor_bill_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vendor_bill_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    vendor_bill_id uuid NOT NULL,
+    purchase_order_item_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    description text NOT NULL,
+    quantity numeric(18,3) NOT NULL,
+    unit_price numeric(18,2) NOT NULL,
+    tax_rate numeric(5,2) DEFAULT 0 NOT NULL,
+    total_price numeric(18,2) NOT NULL,
+    matched_quantity numeric(18,3) DEFAULT 0 NOT NULL,
+    match_status character varying(20) DEFAULT 'unmatched'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT vendor_bill_items_quantity_check CHECK ((quantity > (0)::numeric)),
+    CONSTRAINT vendor_bill_items_unit_price_check CHECK ((unit_price >= (0)::numeric)),
+    CONSTRAINT vendor_bill_items_tax_rate_check CHECK ((tax_rate >= (0)::numeric)),
+    CONSTRAINT vendor_bill_items_total_price_check CHECK ((total_price >= (0)::numeric)),
+    CONSTRAINT vendor_bill_items_matched_quantity_check CHECK ((matched_quantity >= (0)::numeric)),
+    CONSTRAINT vendor_bill_items_match_status_check CHECK (((match_status)::text = ANY ((ARRAY['unmatched'::character varying, 'matched'::character varying, 'price_variance'::character varying, 'quantity_variance'::character varying])::text[])))
+);
+
+ALTER TABLE public.vendor_bill_items OWNER TO postgres;
+
+ALTER TABLE ONLY public.vendor_bills
+    ADD CONSTRAINT vendor_bills_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.vendor_bills
+    ADD CONSTRAINT vendor_bills_internal_bill_number_key UNIQUE (internal_bill_number);
+
+ALTER TABLE ONLY public.vendor_bills
+    ADD CONSTRAINT vendor_bills_vendor_invoice_unique UNIQUE (vendor_id, bill_number);
+
+ALTER TABLE ONLY public.vendor_bill_items
+    ADD CONSTRAINT vendor_bill_items_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_vendor_bills_po_id ON public.vendor_bills USING btree (purchase_order_id);
+CREATE INDEX idx_vendor_bills_vendor_id ON public.vendor_bills USING btree (vendor_id);
+CREATE INDEX idx_vendor_bills_status ON public.vendor_bills USING btree (status);
+CREATE INDEX idx_vendor_bills_match_status ON public.vendor_bills USING btree (match_status);
+CREATE INDEX idx_vendor_bills_bill_date ON public.vendor_bills USING btree (bill_date);
+CREATE INDEX idx_vendor_bill_items_bill_id ON public.vendor_bill_items USING btree (vendor_bill_id);
+CREATE INDEX idx_vendor_bill_items_po_item_id ON public.vendor_bill_items USING btree (purchase_order_item_id);
+CREATE INDEX idx_vendor_bill_items_item_id ON public.vendor_bill_items USING btree (item_id);
+
+ALTER TABLE ONLY public.vendor_bills
+    ADD CONSTRAINT vendor_bills_purchase_order_fk FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.vendor_bill_items
+    ADD CONSTRAINT vendor_bill_items_bill_fk FOREIGN KEY (vendor_bill_id) REFERENCES public.vendor_bills(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.vendor_bill_items
+    ADD CONSTRAINT vendor_bill_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
+
+--
 -- PostgreSQL database dump complete
 --
 

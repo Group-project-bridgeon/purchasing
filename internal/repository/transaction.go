@@ -186,3 +186,70 @@ func (m *postgresGoodsReceiptTransactionManager) WithinTransaction(
 
 	return tx.Commit(ctx)
 }
+
+type VendorBillTransactionManager interface {
+	WithinTransaction(
+		ctx context.Context,
+		fn func(
+			VendorBillRepository,
+			VendorBillItemRepository,
+			PurchaseOrderRepository,
+			PurchaseOrderItemRepository,
+			GoodsReceiptItemRepository,
+			DocumentNumberRepository,
+		) error,
+	) error
+}
+
+type postgresVendorBillTransactionManager struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresVendorBillTransactionManager(
+	db *pgxpool.Pool,
+) VendorBillTransactionManager {
+	return &postgresVendorBillTransactionManager{
+		db: db,
+	}
+}
+
+func (m *postgresVendorBillTransactionManager) WithinTransaction(
+	ctx context.Context,
+	fn func(
+		VendorBillRepository,
+		VendorBillItemRepository,
+		PurchaseOrderRepository,
+		PurchaseOrderItemRepository,
+		GoodsReceiptItemRepository,
+		DocumentNumberRepository,
+	) error,
+) error {
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	billRepository := NewPostgresVendorBillRepositoryWithTx(tx)
+	billItemRepository := NewPostgresVendorBillItemRepositoryWithTx(tx)
+	poRepository := NewPostgresPurchaseOrderRepositoryWithTx(tx)
+	poItemRepository := NewPostgresPurchaseOrderItemRepositoryWithTx(tx)
+	grnItemRepository := NewPostgresGoodsReceiptItemRepositoryWithTx(tx)
+	documentNumberRepository := NewPostgresDocumentNumberRepositoryWithTx(tx)
+
+	if err := fn(
+		billRepository,
+		billItemRepository,
+		poRepository,
+		poItemRepository,
+		grnItemRepository,
+		documentNumberRepository,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
