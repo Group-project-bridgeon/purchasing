@@ -31,6 +31,11 @@ func main() {
 	}
 	defer db.Close()
 
+	// Automatically run database migrations.
+	if err := database.RunMigrations(ctx, db); err != nil {
+		log.Fatalf("failed to run database migrations: %v", err)
+	}
+
 	// Create repositories.
 	purchaseRequestRepository :=
 		repository.NewPostgresPurchaseRequestRepository(db)
