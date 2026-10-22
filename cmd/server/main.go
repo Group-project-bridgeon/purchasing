@@ -194,6 +194,22 @@ func main() {
 			rfqService,
 		)
 
+	// Create Analytics repository.
+	analyticsRepository :=
+		repository.NewPostgresAnalyticsRepository(db)
+
+	// Create Analytics service.
+	analyticsService :=
+		service.NewAnalyticsService(
+			analyticsRepository,
+		)
+
+	// Create Analytics handler.
+	analyticsHandler :=
+		handler.NewAnalyticsHandler(
+			analyticsService,
+		)
+
 	// Create Fiber application.
 	app := fiber.New()
 
@@ -493,6 +509,27 @@ func main() {
 	app.Post(
 		"/api/v1/rfqs/:id/award/:quotationId",
 		rfqHandler.Award,
+	)
+
+	// Analytics routes.
+	app.Get(
+		"/api/v1/analytics/vendors/:vendorId/scorecard",
+		analyticsHandler.GetVendorScorecard,
+	)
+
+	app.Get(
+		"/api/v1/analytics/vendors/performance",
+		analyticsHandler.GetVendorPerformanceRankings,
+	)
+
+	app.Get(
+		"/api/v1/analytics/dashboard/kpis",
+		analyticsHandler.GetDashboardKPIs,
+	)
+
+	app.Get(
+		"/api/v1/analytics/spend/by-vendor",
+		analyticsHandler.GetSpendByVendor,
 	)
 
 	// Start server.
