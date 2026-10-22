@@ -319,6 +319,13 @@ A top-level `Makefile` is provided for standard developer workflows:
 | `make docker-logs`| Tail logs of `purchasing-service` | `docker compose logs -f purchasing-service` |
 | `make db-up` | Start PostgreSQL container only for local dev | `docker compose up -d postgres` |
 | `make db-shell` | Open interactive `psql` shell in Postgres | `docker compose exec postgres psql ...` |
+| `make ci` | Run complete CI checks locally (fmt, vet, test) | `make ci` |
+
+### CI/CD Automation (GitHub Actions)
+The repository includes an automated enterprise CI/CD workflow defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+1. **Lint & Static Analysis**: Runs `gofmt` verification, `go vet`, and configuration integrity checks.
+2. **Automated Testing & Coverage**: Runs complete unit and integration test suites against an automated `postgres:16` service container with race detection (`-race`) and generates atomic coverage reports.
+3. **Docker Build Verification**: Runs multi-stage container build via Buildx to guarantee deployment readiness on every push and pull request.
 
 ### Running with Docker Compose
 To run the full stack (PostgreSQL + Purchasing Service with embedded auto-migrations):

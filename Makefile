@@ -7,7 +7,9 @@ CMD_PATH       := ./cmd/server
 SQLC_BIN       := $(shell which sqlc 2>/dev/null || echo $(HOME)/go/bin/sqlc)
 DOCKER_COMPOSE := docker compose
 
-.PHONY: help run build clean test test-all test-coverage vet fmt sqlc docker-build docker-up docker-down docker-logs db-up db-down db-shell
+.PHONY: help run build clean test test-all test-coverage vet fmt sqlc docker-build docker-up docker-down docker-logs db-up db-down db-shell ci
+
+ci: fmt vet test ## Run standard CI pipeline checks locally (fmt, vet, test)
 
 help: ## Display this help screen
 	@echo "========================================================================"
