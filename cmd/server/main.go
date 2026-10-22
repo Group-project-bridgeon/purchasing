@@ -79,6 +79,30 @@ func main() {
 			purchaseOrderService,
 		)
 
+	// Create Goods Receipt repositories.
+	goodsReceiptRepository :=
+		repository.NewPostgresGoodsReceiptRepository(db)
+
+	goodsReceiptItemRepository :=
+		repository.NewPostgresGoodsReceiptItemRepository(db)
+
+	grnTransactionManager :=
+		repository.NewPostgresGoodsReceiptTransactionManager(db)
+
+	// Create Goods Receipt service.
+	goodsReceiptService :=
+		service.NewGoodsReceiptService(
+			goodsReceiptRepository,
+			goodsReceiptItemRepository,
+			grnTransactionManager,
+		)
+
+	// Create Goods Receipt handler.
+	goodsReceiptHandler :=
+		handler.NewGoodsReceiptHandler(
+			goodsReceiptService,
+		)
+
 	// Create Fiber application.
 	app := fiber.New()
 
@@ -199,6 +223,32 @@ func main() {
 	app.Delete(
 		"/api/v1/purchase-orders/:id/items/:itemId",
 		purchaseOrderHandler.DeleteItem,
+	)
+
+	// Goods Receipt routes.
+	app.Post(
+		"/api/v1/goods-receipts",
+		goodsReceiptHandler.Create,
+	)
+
+	app.Get(
+		"/api/v1/goods-receipts",
+		goodsReceiptHandler.List,
+	)
+
+	app.Get(
+		"/api/v1/goods-receipts/:id",
+		goodsReceiptHandler.GetByID,
+	)
+
+	app.Post(
+		"/api/v1/goods-receipts/:id/cancel",
+		goodsReceiptHandler.Cancel,
+	)
+
+	app.Get(
+		"/api/v1/purchase-orders/:id/goods-receipts",
+		goodsReceiptHandler.ListByPO,
 	)
 
 	// Start server.

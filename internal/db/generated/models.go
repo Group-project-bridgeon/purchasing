@@ -14,6 +14,30 @@ type DocumentNumberCounter struct {
 	LastNumber   int64  `json:"last_number"`
 }
 
+type GoodsReceipt struct {
+	ID              pgtype.UUID        `json:"id"`
+	GrnNumber       string             `json:"grn_number"`
+	PurchaseOrderID pgtype.UUID        `json:"purchase_order_id"`
+	VendorID        pgtype.UUID        `json:"vendor_id"`
+	ReceivedBy      pgtype.UUID        `json:"received_by"`
+	ReceivedAt      pgtype.Timestamptz `json:"received_at"`
+	Status          string             `json:"status"`
+	Notes           pgtype.Text        `json:"notes"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type GoodsReceiptItem struct {
+	ID                  pgtype.UUID        `json:"id"`
+	GoodsReceiptID      pgtype.UUID        `json:"goods_receipt_id"`
+	PurchaseOrderItemID pgtype.UUID        `json:"purchase_order_item_id"`
+	ItemID              pgtype.UUID        `json:"item_id"`
+	ReceivedQuantity    pgtype.Numeric     `json:"received_quantity"`
+	RejectedQuantity    pgtype.Numeric     `json:"rejected_quantity"`
+	RejectionReason     pgtype.Text        `json:"rejection_reason"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+}
+
 type PurchaseOrder struct {
 	ID                   pgtype.UUID        `json:"id"`
 	PoNumber             string             `json:"po_number"`

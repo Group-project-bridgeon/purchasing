@@ -273,6 +273,72 @@ ALTER TABLE ONLY public.purchase_order_items
     ADD CONSTRAINT purchase_order_items_po_fk FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE CASCADE;
 
 --
+-- Name: goods_receipts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.goods_receipts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    grn_number character varying(50) NOT NULL,
+    purchase_order_id uuid NOT NULL,
+    vendor_id uuid NOT NULL,
+    received_by uuid NOT NULL,
+    received_at timestamp with time zone DEFAULT now() NOT NULL,
+    status character varying(20) DEFAULT 'completed'::character varying NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT goods_receipts_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+ALTER TABLE public.goods_receipts OWNER TO postgres;
+
+--
+-- Name: goods_receipt_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.goods_receipt_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    goods_receipt_id uuid NOT NULL,
+    purchase_order_item_id uuid NOT NULL,
+    item_id uuid NOT NULL,
+    received_quantity numeric(18,3) NOT NULL,
+    rejected_quantity numeric(18,3) DEFAULT 0 NOT NULL,
+    rejection_reason text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT goods_receipt_items_received_quantity_check CHECK ((received_quantity >= (0)::numeric)),
+    CONSTRAINT goods_receipt_items_rejected_quantity_check CHECK ((rejected_quantity >= (0)::numeric)),
+    CONSTRAINT goods_receipt_items_total_quantity_check CHECK (((received_quantity + rejected_quantity) > (0)::numeric))
+);
+
+ALTER TABLE public.goods_receipt_items OWNER TO postgres;
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_grn_number_key UNIQUE (grn_number);
+
+ALTER TABLE ONLY public.goods_receipt_items
+    ADD CONSTRAINT goods_receipt_items_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_goods_receipts_po_id ON public.goods_receipts USING btree (purchase_order_id);
+CREATE INDEX idx_goods_receipts_vendor_id ON public.goods_receipts USING btree (vendor_id);
+CREATE INDEX idx_goods_receipts_received_at ON public.goods_receipts USING btree (received_at);
+CREATE INDEX idx_goods_receipts_status ON public.goods_receipts USING btree (status);
+CREATE INDEX idx_goods_receipt_items_grn_id ON public.goods_receipt_items USING btree (goods_receipt_id);
+CREATE INDEX idx_goods_receipt_items_po_item_id ON public.goods_receipt_items USING btree (purchase_order_item_id);
+CREATE INDEX idx_goods_receipt_items_item_id ON public.goods_receipt_items USING btree (item_id);
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_purchase_order_fk FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.goods_receipt_items
+    ADD CONSTRAINT goods_receipt_items_receipt_fk FOREIGN KEY (goods_receipt_id) REFERENCES public.goods_receipts(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.goods_receipt_items
+    ADD CONSTRAINT goods_receipt_items_po_item_fk FOREIGN KEY (purchase_order_item_id) REFERENCES public.purchase_order_items(id) ON DELETE RESTRICT;
+
+--
 -- PostgreSQL database dump complete
 --
 

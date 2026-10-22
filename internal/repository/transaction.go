@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -116,6 +117,69 @@ func (m *postgresPurchaseOrderTransactionManager) WithinTransaction(
 		documentNumberRepository,
 		prRepository,
 		prItemRepository,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+type GoodsReceiptTransactionManager interface {
+	WithinTransaction(
+		ctx context.Context,
+		fn func(
+			GoodsReceiptRepository,
+			GoodsReceiptItemRepository,
+			PurchaseOrderRepository,
+			PurchaseOrderItemRepository,
+			DocumentNumberRepository,
+		) error,
+	) error
+}
+
+type postgresGoodsReceiptTransactionManager struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresGoodsReceiptTransactionManager(
+	db *pgxpool.Pool,
+) GoodsReceiptTransactionManager {
+	return &postgresGoodsReceiptTransactionManager{
+		db: db,
+	}
+}
+
+func (m *postgresGoodsReceiptTransactionManager) WithinTransaction(
+	ctx context.Context,
+	fn func(
+		GoodsReceiptRepository,
+		GoodsReceiptItemRepository,
+		PurchaseOrderRepository,
+		PurchaseOrderItemRepository,
+		DocumentNumberRepository,
+	) error,
+) error {
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	grnRepository := NewPostgresGoodsReceiptRepositoryWithTx(tx)
+	grnItemRepository := NewPostgresGoodsReceiptItemRepositoryWithTx(tx)
+	poRepository := NewPostgresPurchaseOrderRepositoryWithTx(tx)
+	poItemRepository := NewPostgresPurchaseOrderItemRepositoryWithTx(tx)
+	documentNumberRepository := NewPostgresDocumentNumberRepositoryWithTx(tx)
+
+	if err := fn(
+		grnRepository,
+		grnItemRepository,
+		poRepository,
+		poItemRepository,
+		documentNumberRepository,
 	); err != nil {
 		return err
 	}

@@ -15,4 +15,9 @@ var (
 	ErrPurchaseOrderCannotIssue   = errors.New("purchase order cannot be issued in its current status")
 	ErrPurchaseOrderCannotCancel  = errors.New("purchase order cannot be cancelled in its current status")
 	ErrPurchaseOrderCannotClose   = errors.New("purchase order cannot be closed in its current status")
+
+	ErrGoodsReceiptNotFound          = errors.New("goods receipt not found")
+	ErrInvalidPOStatusForReceiving   = errors.New("purchase order is not in a valid status for receiving")
+	ErrExceedsOrderedQuantity        = errors.New("received quantity exceeds remaining ordered quantity")
+	ErrGoodsReceiptCannotCancel      = errors.New("goods receipt cannot be cancelled in its current status")
 )
