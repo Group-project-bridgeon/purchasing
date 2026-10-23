@@ -199,6 +199,16 @@ Migrations are located in `db/migrations/`:
 
 ---
 
+### 4.8 Transactional Outbox & Domain Events (`/api/v1/outbox`)
+
+| Method | Endpoint | Query Parameters | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/outbox/events` | `status`, `aggregate_type`, `limit`, `offset` | Query domain events (filter by `pending`, `published`, `failed`) |
+| `GET` | `/api/v1/outbox/events/:id` | — | Retrieve single domain event payload by UUID |
+| `POST` | `/api/v1/outbox/events/:id/retry` | — | Requeue a failed or stalled event for immediate background redispatch |
+
+---
+
 ## 5. Core Business Logic & State Machines
 
 ### 5.1 Purchase Order Lifecycle

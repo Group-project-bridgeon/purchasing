@@ -34,4 +34,10 @@ func TestLoadRoutes_EmbeddedFallback(t *testing.T) {
 	if routes.Analytics.DashboardKPIs != "/analytics/dashboard/kpis" {
 		t.Errorf("expected Analytics DashboardKPIs '/analytics/dashboard/kpis', got %q", routes.Analytics.DashboardKPIs)
 	}
+	if routes.Outbox.Base != "/outbox/events" {
+		t.Errorf("expected Outbox Base '/outbox/events', got %q", routes.Outbox.Base)
+	}
+	if routes.Outbox.Retry != "/outbox/events/:id/retry" {
+		t.Errorf("expected Outbox Retry '/outbox/events/:id/retry', got %q", routes.Outbox.Retry)
+	}
 }

@@ -640,6 +640,30 @@ ALTER TABLE ONLY public.vendor_quotation_items
     ADD CONSTRAINT vendor_quotation_items_rfq_item_fk FOREIGN KEY (rfq_item_id) REFERENCES public.rfq_items(id) ON DELETE RESTRICT;
 
 --
+-- Name: outbox_events; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.outbox_events (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    aggregate_type character varying(50) NOT NULL,
+    aggregate_id character varying(50) NOT NULL,
+    event_type character varying(100) NOT NULL,
+    payload jsonb NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    retry_count integer DEFAULT 0 NOT NULL,
+    last_error text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    published_at timestamp with time zone,
+    CONSTRAINT outbox_events_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'published'::character varying, 'failed'::character varying])::text[])))
+);
+
+ALTER TABLE ONLY public.outbox_events
+    ADD CONSTRAINT outbox_events_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_outbox_events_pending ON public.outbox_events (created_at ASC) WHERE status = 'pending';
+CREATE INDEX idx_outbox_events_aggregate ON public.outbox_events (aggregate_type, aggregate_id);
+
+--
 -- PostgreSQL database dump complete
 --
 

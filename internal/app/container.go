@@ -12,11 +12,12 @@ import (
 
 // Container manages the dependency injection lifecycle of the purchasing microservice.
 type Container struct {
-	Config   *config.Config
-	Routes   *config.RoutesConfig
-	DB       *pgxpool.Pool
-	FiberApp *fiber.App
-	Handlers api.Handlers
+	Config        *config.Config
+	Routes        *config.RoutesConfig
+	DB            *pgxpool.Pool
+	FiberApp      *fiber.App
+	Handlers      api.Handlers
+	OutboxService service.OutboxService
 }
 
 // NewContainer initializes repositories, services, handlers, and the Fiber application.
@@ -56,10 +57,13 @@ func NewContainer(
 	rfqTxManager := repository.NewPostgresRFQTransactionManager(db)
 
 	analyticsRepo := repository.NewPostgresAnalyticsRepository(db)
+	outboxRepo := repository.NewPostgresOutboxRepository(db)
 
 	// -------------------------------------------------------------------------
 	// 2. Business Services
 	// -------------------------------------------------------------------------
+	outboxService := service.NewOutboxService(outboxRepo, nil)
+
 	prService := service.NewPurchaseRequestService(
 		purchaseRequestRepo,
 		purchaseRequestItemRepo,
@@ -121,6 +125,7 @@ func NewContainer(
 		PurchaseReturn:  handler.NewPurchaseReturnHandler(returnService),
 		RFQ:             handler.NewRFQHandler(rfqService),
 		Analytics:       handler.NewAnalyticsHandler(analyticsService),
+		Outbox:          handler.NewOutboxHandler(outboxService),
 	}
 
 	// -------------------------------------------------------------------------
@@ -134,11 +139,12 @@ func NewContainer(
 	api.SetupRouter(app, handlers, routesCfg)
 
 	return &Container{
-		Config:   cfg,
-		Routes:   routesCfg,
-		DB:       db,
-		FiberApp: app,
-		Handlers: handlers,
+		Config:        cfg,
+		Routes:        routesCfg,
+		DB:            db,
+		FiberApp:      app,
+		Handlers:      handlers,
+		OutboxService: outboxService,
 	}
 }
 

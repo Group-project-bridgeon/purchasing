@@ -18,6 +18,7 @@ type Handlers struct {
 	PurchaseReturn  *handler.PurchaseReturnHandler
 	RFQ             *handler.RFQHandler
 	Analytics       *handler.AnalyticsHandler
+	Outbox          *handler.OutboxHandler
 }
 
 // SetupRouter configures the HTTP middleware pipeline, system endpoints, and all domain routes.
@@ -45,4 +46,5 @@ func SetupRouter(
 	v1.RegisterPurchaseReturnRoutes(v1Group, handlers.PurchaseReturn, routesCfg.PurchaseReturns)
 	v1.RegisterRFQRoutes(v1Group, handlers.RFQ, routesCfg.RFQs)
 	v1.RegisterAnalyticsRoutes(v1Group, handlers.Analytics, routesCfg.Analytics)
+	v1.RegisterOutboxRoutes(v1Group, handlers.Outbox, routesCfg.Outbox)
 }

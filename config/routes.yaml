@@ -72,3 +72,8 @@ analytics:
   vendor_performance: "/analytics/vendors/performance"
   dashboard_kpis: "/analytics/dashboard/kpis"
   spend_by_vendor: "/analytics/spend/by-vendor"
+
+outbox:
+  base: "/outbox/events"
+  by_id: "/outbox/events/:id"
+  retry: "/outbox/events/:id/retry"

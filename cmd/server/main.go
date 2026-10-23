@@ -44,7 +44,12 @@ func main() {
 	container := app.NewContainer(db, cfg, routesCfg)
 	server := container.App()
 
-	// 5. Start HTTP server in a non-blocking goroutine.
+	// 5. Start background outbox domain event publisher.
+	publisherCtx, stopPublisher := context.WithCancel(context.Background())
+	defer stopPublisher()
+	container.OutboxService.StartBackgroundPublisher(publisherCtx, 3*time.Second)
+
+	// 6. Start HTTP server in a non-blocking goroutine.
 	go func() {
 		log.Printf("purchasing service running on :%s (api prefix: %s)", cfg.ServerPort, routesCfg.APIPrefix)
 		if err := server.Listen(":" + cfg.ServerPort); err != nil {
@@ -52,12 +57,16 @@ func main() {
 		}
 	}()
 
-	// 6. Graceful shutdown on OS interrupt / SIGTERM.
+	// 7. Graceful shutdown on OS interrupt / SIGTERM.
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
 	log.Println("received shutdown signal, gracefully closing server...")
+
+	// Stop background outbox publisher
+	stopPublisher()
+	container.OutboxService.Stop()
 
 	if err := server.ShutdownWithTimeout(10 * time.Second); err != nil {
 		log.Printf("error during graceful shutdown: %v", err)

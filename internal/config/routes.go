@@ -87,6 +87,12 @@ type AnalyticsRoutes struct {
 	SpendByVendor     string `yaml:"spend_by_vendor"`
 }
 
+type OutboxRoutes struct {
+	Base  string `yaml:"base"`
+	ByID  string `yaml:"by_id"`
+	Retry string `yaml:"retry"`
+}
+
 type RoutesConfig struct {
 	Version          string                `yaml:"version"`
 	APIPrefix        string                `yaml:"api_prefix"`
@@ -98,6 +104,7 @@ type RoutesConfig struct {
 	PurchaseReturns  PurchaseReturnRoutes  `yaml:"purchase_returns"`
 	RFQs             RFQRoutes             `yaml:"rfqs"`
 	Analytics        AnalyticsRoutes       `yaml:"analytics"`
+	Outbox           OutboxRoutes          `yaml:"outbox"`
 }
 
 // LoadRoutes loads the routes configuration from disk if available, otherwise from embedded defaults.
