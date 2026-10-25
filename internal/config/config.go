@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -18,27 +19,27 @@ type Config struct {
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 
-	databaseURL := os.Getenv("DATABASE_URL")
+	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")
 	}
 
-	serverPort := os.Getenv("SERVER_PORT")
+	serverPort := strings.TrimSpace(os.Getenv("SERVER_PORT"))
 	if serverPort == "" {
 		serverPort = "8080"
 	}
 
-	environment := os.Getenv("APP_ENV")
+	environment := strings.TrimSpace(os.Getenv("APP_ENV"))
 	if environment == "" {
 		environment = "development"
 	}
 
-	logLevel := os.Getenv("LOG_LEVEL")
+	logLevel := strings.TrimSpace(os.Getenv("LOG_LEVEL"))
 	if logLevel == "" {
 		logLevel = "info"
 	}
 
-	logFormat := os.Getenv("LOG_FORMAT")
+	logFormat := strings.TrimSpace(os.Getenv("LOG_FORMAT"))
 	if logFormat == "" {
 		if environment == "production" {
 			logFormat = "json"
