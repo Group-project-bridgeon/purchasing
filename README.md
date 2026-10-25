@@ -255,16 +255,16 @@ purchasing/
 │   ├── queries/                                     # Raw SQL queries for sqlc
 │   └── schema/                                      # Consolidated database schema
 ├── internal/
-│   ├── api/                                         # Centralized API & routing layer
+│   ├── api/                                         # Centralized API & routing layer (categorized by domain)
+│   │   ├── analytics.go                             # Analytics & KPI endpoints
+│   │   ├── goods_receipts.go                        # Goods Receipts (GRN) endpoints
+│   │   ├── outbox.go                                # Transactional Outbox & Event replay endpoints
+│   │   ├── purchase_orders.go                       # Purchase Orders endpoints
+│   │   ├── purchase_requests.go                     # Purchase Requests endpoints
+│   │   ├── purchase_returns.go                      # Purchase Returns & Debit Notes endpoints
+│   │   ├── rfqs.go                                  # RFQ & Sourcing endpoints
 │   │   ├── router.go                                # Master router setup & middleware mounting
-│   │   └── v1/                                      # Modular domain route registrars
-│   │       ├── analytics.go
-│   │       ├── goods_receipts.go
-│   │       ├── purchase_orders.go
-│   │       ├── purchase_requests.go
-│   │       ├── purchase_returns.go
-│   │       ├── rfqs.go
-│   │       └── vendor_bills.go
+│   │   └── vendor_bills.go                          # Vendor Bills & 3-Way Matching endpoints
 │   ├── app/
 │   │   └── container.go                             # Dependency Injection Container & Service Factory
 │   ├── config/                                      # Environment (.env) & Routes (routes.yaml) config

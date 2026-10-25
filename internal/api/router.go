@@ -1,7 +1,6 @@
 package api
 
 import (
-	v1 "github.com/Group-project-bridgeon/purchasing/internal/api/v1"
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/docs"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
@@ -39,12 +38,12 @@ func SetupRouter(
 	// 3. Mount API V1 Routes Group
 	v1Group := app.Group(routesCfg.APIPrefix)
 
-	v1.RegisterPurchaseRequestRoutes(v1Group, handlers.PurchaseRequest, routesCfg.PurchaseRequests)
-	v1.RegisterPurchaseOrderRoutes(v1Group, handlers.PurchaseOrder, routesCfg.PurchaseOrders)
-	v1.RegisterGoodsReceiptRoutes(v1Group, handlers.GoodsReceipt, routesCfg.GoodsReceipts, routesCfg.PurchaseOrders)
-	v1.RegisterVendorBillRoutes(v1Group, handlers.VendorBill, routesCfg.VendorBills, routesCfg.PurchaseOrders)
-	v1.RegisterPurchaseReturnRoutes(v1Group, handlers.PurchaseReturn, routesCfg.PurchaseReturns)
-	v1.RegisterRFQRoutes(v1Group, handlers.RFQ, routesCfg.RFQs)
-	v1.RegisterAnalyticsRoutes(v1Group, handlers.Analytics, routesCfg.Analytics)
-	v1.RegisterOutboxRoutes(v1Group, handlers.Outbox, routesCfg.Outbox)
+	RegisterPurchaseRequestRoutes(v1Group, handlers.PurchaseRequest, routesCfg.PurchaseRequests)
+	RegisterPurchaseOrderRoutes(v1Group, handlers.PurchaseOrder, routesCfg.PurchaseOrders)
+	RegisterGoodsReceiptRoutes(v1Group, handlers.GoodsReceipt, routesCfg.GoodsReceipts, routesCfg.PurchaseOrders)
+	RegisterVendorBillRoutes(v1Group, handlers.VendorBill, routesCfg.VendorBills, routesCfg.PurchaseOrders)
+	RegisterPurchaseReturnRoutes(v1Group, handlers.PurchaseReturn, routesCfg.PurchaseReturns)
+	RegisterRFQRoutes(v1Group, handlers.RFQ, routesCfg.RFQs)
+	RegisterAnalyticsRoutes(v1Group, handlers.Analytics, routesCfg.Analytics)
+	RegisterOutboxRoutes(v1Group, handlers.Outbox, routesCfg.Outbox)
 }
