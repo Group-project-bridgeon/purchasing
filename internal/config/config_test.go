@@ -23,6 +23,16 @@ func TestLoad(t *testing.T) {
 	if cfg.ServerPort != "9090" {
 		t.Fatalf("expected port 9090, got %s", cfg.ServerPort)
 	}
+
+	if cfg.Environment != "development" {
+		t.Fatalf("expected default environment development, got %s", cfg.Environment)
+	}
+	if cfg.LogLevel != "info" {
+		t.Fatalf("expected default log level info, got %s", cfg.LogLevel)
+	}
+	if cfg.LogFormat != "text" {
+		t.Fatalf("expected default dev log format text, got %s", cfg.LogFormat)
+	}
 }
 
 func TestLoadRequiresDatabaseURL(t *testing.T) {

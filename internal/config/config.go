@@ -10,6 +10,9 @@ import (
 type Config struct {
 	DatabaseURL string
 	ServerPort  string
+	Environment string
+	LogLevel    string
+	LogFormat   string
 }
 
 func Load() (*Config, error) {
@@ -25,8 +28,30 @@ func Load() (*Config, error) {
 		serverPort = "8080"
 	}
 
+	environment := os.Getenv("APP_ENV")
+	if environment == "" {
+		environment = "development"
+	}
+
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
+	logFormat := os.Getenv("LOG_FORMAT")
+	if logFormat == "" {
+		if environment == "production" {
+			logFormat = "json"
+		} else {
+			logFormat = "text"
+		}
+	}
+
 	return &Config{
 		DatabaseURL: databaseURL,
 		ServerPort:  serverPort,
+		Environment: environment,
+		LogLevel:    logLevel,
+		LogFormat:   logFormat,
 	}, nil
 }

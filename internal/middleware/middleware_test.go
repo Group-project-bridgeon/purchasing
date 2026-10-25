@@ -95,3 +95,21 @@ func TestMiddleware_Recovery(t *testing.T) {
 		t.Errorf("expected code 500, got %v", errMap["code"])
 	}
 }
+
+func TestMiddleware_Metrics(t *testing.T) {
+	app := fiber.New()
+	app.Use(Metrics())
+
+	app.Get("/test-metrics", func(c *fiber.Ctx) error {
+		return c.SendString("ok")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test-metrics", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
+	}
+}

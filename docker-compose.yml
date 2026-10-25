@@ -28,9 +28,48 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/purchasing?sslmode=disable
       SERVER_PORT: "8080"
+      APP_ENV: "production"
+      LOG_LEVEL: "info"
+      LOG_FORMAT: "json"
     depends_on:
       postgres:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: purchasing-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deployments/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - purchasing_promdata:/prometheus
+    depends_on:
+      - purchasing-service
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: purchasing-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./deployments/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./deployments/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - purchasing_grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
   purchasing_pgdata:
+  purchasing_promdata:
+  purchasing_grafanadata:

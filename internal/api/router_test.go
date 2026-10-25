@@ -48,4 +48,14 @@ func TestSetupRouter_SystemEndpoints(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200 from /docs/openapi.json, got %d", resp.StatusCode)
 	}
+
+	// Test 4: Prometheus Metrics
+	req = httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	resp, err = app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error on /metrics: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from /metrics, got %d", resp.StatusCode)
+	}
 }

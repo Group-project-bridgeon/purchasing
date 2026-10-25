@@ -4,6 +4,7 @@ import (
 	"github.com/Group-project-bridgeon/purchasing/internal/api"
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
+	"github.com/Group-project-bridgeon/purchasing/internal/metrics"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
 	"github.com/Group-project-bridgeon/purchasing/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -131,6 +132,10 @@ func NewContainer(
 	// -------------------------------------------------------------------------
 	// 4. Fiber Engine & Master Router Setup
 	// -------------------------------------------------------------------------
+	if db != nil {
+		metrics.RegisterDBPoolCollector(db)
+	}
+
 	app := fiber.New(fiber.Config{
 		AppName:      "ERP Purchasing Microservice",
 		ServerHeader: "Fiber",

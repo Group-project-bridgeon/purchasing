@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,18 +11,28 @@ import (
 	"github.com/Group-project-bridgeon/purchasing/internal/app"
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/database"
+	"github.com/Group-project-bridgeon/purchasing/internal/logger"
 )
 
 func main() {
 	// 1. Load application & route configurations.
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load environment config: %v", err)
+		slog.Error("failed to load environment config", slog.Any("error", err))
+		os.Exit(1)
 	}
+
+	// Initialize production-grade structured logging.
+	logger.Init(logger.Config{
+		Environment: cfg.Environment,
+		Level:       cfg.LogLevel,
+		Format:      cfg.LogFormat,
+	})
 
 	routesCfg, err := config.LoadRoutes()
 	if err != nil {
-		log.Fatalf("failed to load routes config: %v", err)
+		slog.Error("failed to load routes config", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	// 2. Initialize PostgreSQL connection pool.
@@ -31,13 +41,15 @@ func main() {
 
 	db, err := database.NewPostgresPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		slog.Error("failed to connect to database", slog.Any("error", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
 	// 3. Automatically run embedded database migrations.
 	if err := database.RunMigrations(ctx, db); err != nil {
-		log.Fatalf("failed to run database migrations: %v", err)
+		slog.Error("failed to run database migrations", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	// 4. Initialize Dependency Injection Container & Fiber Engine.
@@ -51,9 +63,15 @@ func main() {
 
 	// 6. Start HTTP server in a non-blocking goroutine.
 	go func() {
-		log.Printf("purchasing service running on :%s (api prefix: %s)", cfg.ServerPort, routesCfg.APIPrefix)
+		slog.Info(
+			"purchasing service running",
+			slog.String("port", cfg.ServerPort),
+			slog.String("api_prefix", routesCfg.APIPrefix),
+			slog.String("metrics", "/metrics"),
+			slog.String("docs", "/docs"),
+		)
 		if err := server.Listen(":" + cfg.ServerPort); err != nil {
-			log.Printf("server listener stopped: %v", err)
+			slog.Info("server listener stopped", slog.Any("error", err))
 		}
 	}()
 
@@ -62,15 +80,15 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	log.Println("received shutdown signal, gracefully closing server...")
+	slog.Info("received shutdown signal, gracefully closing server...")
 
 	// Stop background outbox publisher
 	stopPublisher()
 	container.OutboxService.Stop()
 
 	if err := server.ShutdownWithTimeout(10 * time.Second); err != nil {
-		log.Printf("error during graceful shutdown: %v", err)
+		slog.Error("error during graceful shutdown", slog.Any("error", err))
 	} else {
-		log.Println("server shut down cleanly")
+		slog.Info("server shut down cleanly")
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
 	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Handlers bundles all domain handlers for clean dependency injection into the router.
@@ -28,12 +30,14 @@ func SetupRouter(
 ) {
 	// 1. Mount Global Middleware Pipeline
 	app.Use(middleware.RequestID())
+	app.Use(middleware.Metrics())
 	app.Use(middleware.Logger())
 	app.Use(middleware.Recovery())
 	app.Use(middleware.CORS())
 
-	// 2. Mount Documentation & System Health
+	// 2. Mount Documentation, Health & Prometheus Metrics
 	docs.RegisterRoutes(app)
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	// 3. Mount API V1 Routes Group
 	v1Group := app.Group(routesCfg.APIPrefix)

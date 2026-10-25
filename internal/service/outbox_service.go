@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
+	"github.com/Group-project-bridgeon/purchasing/internal/metrics"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
 )
 
@@ -25,13 +26,13 @@ func NewLogEventDispatcher() *LogEventDispatcher {
 }
 
 func (d *LogEventDispatcher) Dispatch(ctx context.Context, event *domain.OutboxEvent) error {
-	log.Printf(
-		"[OUTBOX EVENT DISPATCHED] type=%s aggregate=%s:%s event_id=%s payload=%s",
-		event.EventType,
-		event.AggregateType,
-		event.AggregateID,
-		event.ID,
-		string(event.Payload),
+	slog.InfoContext(
+		ctx,
+		"outbox_event_dispatched",
+		slog.String("event_type", event.EventType),
+		slog.String("aggregate_type", event.AggregateType),
+		slog.String("aggregate_id", event.AggregateID),
+		slog.String("event_id", event.ID),
 	)
 	return nil
 }
@@ -130,6 +131,11 @@ func (s *outboxService) ProcessBatch(
 		batchSize = 50
 	}
 
+	start := time.Now()
+	defer func() {
+		metrics.RecordOutboxBatchDuration(time.Since(start))
+	}()
+
 	events, err := s.repo.GetPendingEvents(ctx, batchSize)
 	if err != nil {
 		return 0, fmt.Errorf("fetch pending events: %w", err)
@@ -139,14 +145,27 @@ func (s *outboxService) ProcessBatch(
 	for _, event := range events {
 		dispatchErr := s.dispatcher.Dispatch(ctx, event)
 		if dispatchErr != nil {
-			log.Printf("[OUTBOX ERROR] dispatch failed for event %s: %v", event.ID, dispatchErr)
+			metrics.RecordOutboxEvent("failed")
+			slog.ErrorContext(ctx, "outbox_dispatch_failed",
+				slog.String("event_id", event.ID),
+				slog.String("event_type", event.EventType),
+				slog.Any("error", dispatchErr),
+			)
 			if markErr := s.repo.MarkFailed(ctx, event.ID, dispatchErr.Error()); markErr != nil {
-				log.Printf("[OUTBOX ERROR] failed to mark event %s as failed: %v", event.ID, markErr)
+				slog.ErrorContext(ctx, "outbox_mark_failed_error",
+					slog.String("event_id", event.ID),
+					slog.Any("error", markErr),
+				)
 			}
 		} else {
 			if markErr := s.repo.MarkPublished(ctx, event.ID); markErr != nil {
-				log.Printf("[OUTBOX ERROR] failed to mark event %s as published: %v", event.ID, markErr)
+				metrics.RecordOutboxEvent("failed")
+				slog.ErrorContext(ctx, "outbox_mark_published_error",
+					slog.String("event_id", event.ID),
+					slog.Any("error", markErr),
+				)
 			} else {
+				metrics.RecordOutboxEvent("dispatched")
 				dispatchedCount++
 			}
 		}
@@ -172,28 +191,28 @@ func (s *outboxService) StartBackgroundPublisher(
 		for {
 			select {
 			case <-s.stopChan:
-				log.Println("[OUTBOX] background publisher worker stopping...")
+				slog.InfoContext(ctx, "outbox_worker_stopping")
 				return
 			case <-ctx.Done():
-				log.Println("[OUTBOX] context cancelled, background publisher worker stopping...")
+				slog.InfoContext(ctx, "outbox_worker_context_cancelled")
 				return
 			case <-ticker.C:
 				processCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				count, err := s.ProcessBatch(processCtx, 50)
 				cancel()
 				if err != nil {
-					log.Printf("[OUTBOX] batch processing error: %v", err)
+					slog.ErrorContext(ctx, "outbox_batch_processing_error", slog.Any("error", err))
 				} else if count > 0 {
-					log.Printf("[OUTBOX] successfully dispatched %d pending events", count)
+					slog.InfoContext(ctx, "outbox_batch_dispatched", slog.Int("count", count))
 				}
 			}
 		}
 	}()
-	log.Printf("[OUTBOX] background publisher worker started (interval: %v)", pollInterval)
+	slog.InfoContext(ctx, "outbox_worker_started", slog.Duration("interval", pollInterval))
 }
 
 func (s *outboxService) Stop() {
 	close(s.stopChan)
 	s.wg.Wait()
-	log.Println("[OUTBOX] background publisher worker shut down cleanly")
+	slog.Info("outbox_worker_stopped_cleanly")
 }

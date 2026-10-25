@@ -1,0 +1,2110 @@
+{
+  "info": {
+    "_postman_id": "c1f7a2d8-e390-4bf6-8a71-6d738f7a6345",
+    "name": "ERP Purchasing Microservice API",
+    "description": "Production-grade Postman collection covering all P2P domain workflows: Requisitions, Sourcing & RFQs, Purchase Orders, Goods Receipts (GRN), Vendor Bills & 3-Way Matching, Purchase Returns, Analytics, Transactional Outbox, System Health, and Prometheus Metrics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "apiPrefix",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "vendor_id",
+      "value": "v-acme-corp-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. System & Observability",
+      "item": [
+        {
+          "name": "Healthcheck",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Liveness probe returning service status"
+          },
+          "response": []
+        },
+        {
+          "name": "API Healthcheck",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "health"
+              ]
+            },
+            "description": "Versioned healthcheck endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "description": "Live Prometheus metrics scrapable by monitoring server"
+          },
+          "response": []
+        },
+        {
+          "name": "Interactive Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs"
+              ]
+            },
+            "description": "Interactive Swagger UI web page"
+          },
+          "response": []
+        },
+        {
+          "name": "Raw OpenAPI 3.0 Spec",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/docs/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "docs",
+                "openapi.json"
+              ]
+            },
+            "description": "JSON OpenAPI 3.0 specification document"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Purchase Requests",
+      "item": [
+        {
+          "name": "Create Purchase Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests"
+              ]
+            },
+            "description": "Create a new purchase requisition with line items in DRAFT status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requested_by\": \"john.doe@company.com\",\n  \"purpose\": \"Q4 IT Infrastructure Upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"estimated_unit_price\": \"4500.00\"\n    },\n    {\n      \"item_id\": \"item-cisco-switch-9300\",\n      \"description\": \"Cisco Catalyst 9300 48-port PoE+\",\n      \"quantity\": \"2.00\",\n      \"estimated_unit_price\": \"2800.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_request && jsonData.purchase_request.id) {\n        pm.environment.set(\"purchase_request_id\", jsonData.purchase_request.id);\n        console.log(\"Saved purchase_request_id: \" + jsonData.purchase_request.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_request_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Purchase Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests?limit=20&offset=0"
+              ]
+            },
+            "description": "Paginated listing of purchase requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Purchase Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}"
+              ]
+            },
+            "description": "Retrieve requisition details with items"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Purchase Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}"
+              ]
+            },
+            "description": "Update header details of draft request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purpose\": \"Updated Purpose: Q4 IT Upgrades & Expansion\",\n  \"notes\": \"Fast-track approved by IT director\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Line Item to PR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}",
+                "items"
+              ]
+            },
+            "description": "Add a new item to draft request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": \"item-ups-apc-3000\",\n  \"description\": \"APC Smart-UPS 3000VA\",\n  \"quantity\": \"2.00\",\n  \"estimated_unit_price\": \"1200.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Requisition Line Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}",
+                "items"
+              ]
+            },
+            "description": "List all line items for this request"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Requisition for Approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}",
+                "submit"
+              ]
+            },
+            "description": "Transition status from DRAFT to SUBMITTED"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Requisition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}",
+                "approve"
+              ]
+            },
+            "description": "Approve requisition allowing PO or RFQ creation"
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Requisition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-requests",
+                "{{purchase_request_id}}",
+                "reject"
+              ]
+            },
+            "description": "Reject requisition",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Budget cap reached for current fiscal quarter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. RFQs & Sourcing",
+      "item": [
+        {
+          "name": "Create RFQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs"
+              ]
+            },
+            "description": "Create a strategic sourcing RFQ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"RFQ-2026-IT Hardware Procurement\",\n  \"submission_deadline\": \"2026-11-15T18:00:00Z\",\n  \"created_by\": \"sarah.procurement@company.com\",\n  \"notes\": \"Bids must include 3-year warranty and on-site support SLA\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"target_quantity\": \"5.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create RFQ from Approved PR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/from-request/{{purchase_request_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "from-request",
+                "{{purchase_request_id}}"
+              ]
+            },
+            "description": "Auto-generate RFQ directly from approved purchase request line items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"RFQ Sourcing from PR\",\n  \"submission_deadline\": \"2026-11-20T18:00:00Z\",\n  \"created_by\": \"buyer@company.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List RFQs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs?limit=20&offset=0"
+              ]
+            },
+            "description": "Paginated listing of RFQs"
+          },
+          "response": []
+        },
+        {
+          "name": "Get RFQ by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}"
+              ]
+            },
+            "description": "Retrieve RFQ details and required items"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish RFQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "publish"
+              ]
+            },
+            "description": "Open RFQ for vendor quotation submissions"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Vendor Quotation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/quotations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "quotations"
+              ]
+            },
+            "description": "Submit vendor quotation and pricing response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"quote_reference\": \"ACME-BID-8910\",\n  \"valid_until\": \"2026-11-30T23:59:59Z\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"lead_time_days\": 14,\n  \"items\": [\n    {\n      \"rfq_item_id\": \"{{rfq_item_id}}\",\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"offered_quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.quotation && jsonData.quotation.id) {\n        pm.environment.set(\"quotation_id\", jsonData.quotation.id);\n        console.log(\"Saved quotation_id: \" + jsonData.quotation.id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Compare Vendor Quotations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/compare",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "compare"
+              ]
+            },
+            "description": "Automated comparison matrix of all bids ranking by price and lead time"
+          },
+          "response": []
+        },
+        {
+          "name": "Award Quotation & Generate PO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/award/{{quotation_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "award",
+                "{{quotation_id}}"
+              ]
+            },
+            "description": "Award winning quotation; automatically generates Purchase Order"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Award generated purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Close RFQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "close"
+              ]
+            },
+            "description": "Close RFQ once bidding is finalized"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel RFQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "rfqs",
+                "{{rfq_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel RFQ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Project delayed to next fiscal year\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Purchase Orders",
+      "item": [
+        {
+          "name": "Create Direct Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders"
+              ]
+            },
+            "description": "Create a purchase order with items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"shipping_address\": \"HQ Datacenter, Building 4, 100 Tech Blvd\",\n  \"notes\": \"Direct purchase order for server upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create PO from Approved PR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/from-request/{{purchase_request_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "from-request",
+                "{{purchase_request_id}}"
+              ]
+            },
+            "description": "Convert approved purchase request directly into purchase order",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders?limit=20&offset=0"
+              ]
+            },
+            "description": "Paginated listing of purchase orders"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Purchase Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}"
+              ]
+            },
+            "description": "Retrieve purchase order details"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}",
+                "approve"
+              ]
+            },
+            "description": "Financial approval of PO"
+          },
+          "response": []
+        },
+        {
+          "name": "Send PO to Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/issue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}",
+                "issue"
+              ]
+            },
+            "description": "Issue/send PO to vendor (status changes to ISSUED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get PO Goods Receipts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/goods-receipts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}",
+                "goods-receipts"
+              ]
+            },
+            "description": "Retrieve all receipts linked to this PO"
+          },
+          "response": []
+        },
+        {
+          "name": "Get PO Vendor Bills",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/vendor-bills",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}",
+                "vendor-bills"
+              ]
+            },
+            "description": "Retrieve all vendor bills linked to this PO"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-orders",
+                "{{purchase_order_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel purchase order",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cancelled per vendor agreement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. Goods Receipts",
+      "item": [
+        {
+          "name": "Create Goods Receipt (GRN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "goods-receipts"
+              ]
+            },
+            "description": "Receive shipments against an issued purchase order",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"received_by\": \"warehouse.dock@company.com\",\n  \"notes\": \"Shipment arrived in good condition, dock 3\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"received_quantity\": \"5.00\",\n      \"rejected_quantity\": \"0.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.goods_receipt && jsonData.goods_receipt.id) {\n        pm.environment.set(\"goods_receipt_id\", jsonData.goods_receipt.id);\n        console.log(\"Saved goods_receipt_id: \" + jsonData.goods_receipt.id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Goods Receipts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "goods-receipts?limit=20&offset=0"
+              ]
+            },
+            "description": "Paginated listing of Goods Receipts"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Goods Receipt by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts/{{goods_receipt_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "goods-receipts",
+                "{{goods_receipt_id}}"
+              ]
+            },
+            "description": "Retrieve GRN details and inspected line items"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Goods Receipt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts/{{goods_receipt_id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "goods-receipts",
+                "{{goods_receipt_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Rollback received quantities if intake was entered in error"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Vendor Bills & 3-Way Match",
+      "item": [
+        {
+          "name": "Create Vendor Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills"
+              ]
+            },
+            "description": "Register vendor bill against PO",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bill_number\": \"INV-2026-0982\",\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"bill_date\": \"2026-10-25T00:00:00Z\",\n  \"currency\": \"USD\",\n  \"notes\": \"Invoice matching delivery receipt\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.vendor_bill && jsonData.vendor_bill.id) {\n        pm.environment.set(\"vendor_bill_id\", jsonData.vendor_bill.id);\n        console.log(\"Saved vendor_bill_id: \" + jsonData.vendor_bill.id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Perform 3-Way Matching",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/match",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills",
+                "{{vendor_bill_id}}",
+                "match"
+              ]
+            },
+            "description": "Executes PO vs GRN vs Bill automated 3-way reconciliation"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Vendor Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills",
+                "{{vendor_bill_id}}",
+                "approve"
+              ]
+            },
+            "description": "Approve reconciled bill for ERP Accounts Payable payout"
+          },
+          "response": []
+        },
+        {
+          "name": "List Vendor Bills",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills?limit=20&offset=0"
+              ]
+            },
+            "description": "Paginated listing of vendor bills"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vendor Bill by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills",
+                "{{vendor_bill_id}}"
+              ]
+            },
+            "description": "Retrieve bill details, item lines, and match status"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Vendor Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "vendor-bills",
+                "{{vendor_bill_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel bill and release billed amounts"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07. Purchase Returns",
+      "item": [
+        {
+          "name": "Create Purchase Return",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns"
+              ]
+            },
+            "description": "Initiate return and Debit Note generation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"goods_receipt_id\": \"{{goods_receipt_id}}\",\n  \"reason\": \"Defective components detected during datacenter burn-in test\",\n  \"created_by\": \"qa.engineer@company.com\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"return_quantity\": \"1.00\",\n      \"reason\": \"Motherboard POST failure\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_return && jsonData.purchase_return.id) {\n        pm.environment.set(\"purchase_return_id\", jsonData.purchase_return.id);\n        console.log(\"Saved purchase_return_id: \" + jsonData.purchase_return.id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Purchase Returns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns?limit=20&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns?limit=20&offset=0"
+              ]
+            },
+            "description": "List purchase returns"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Purchase Return by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns",
+                "{{purchase_return_id}}"
+              ]
+            },
+            "description": "Retrieve return details and debit amount"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Purchase Return",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns",
+                "{{purchase_return_id}}",
+                "approve"
+              ]
+            },
+            "description": "Manager approval of return authorization"
+          },
+          "response": []
+        },
+        {
+          "name": "Ship Return Goods",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/ship",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns",
+                "{{purchase_return_id}}",
+                "ship"
+              ]
+            },
+            "description": "Log carrier dispatch tracking details",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carrier\": \"FedEx Freight\",\n  \"tracking_number\": \"781298471928\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Return & Issue Credit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns",
+                "{{purchase_return_id}}",
+                "complete"
+              ]
+            },
+            "description": "Finalize return and post Debit Note credit memo"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Purchase Return",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "purchase-returns",
+                "{{purchase_return_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel return"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08. Sourcing & Spend Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard KPIs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/dashboard/kpis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "analytics",
+                "dashboard",
+                "kpis"
+              ]
+            },
+            "description": "Aggregated procurement KPIs: total spend, open requisitions, pending bills, return rate"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vendor Performance Scorecard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/vendors/{{vendor_id}}/scorecard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "analytics",
+                "vendors",
+                "{{vendor_id}}",
+                "scorecard"
+              ]
+            },
+            "description": "Vendor ratings: on-time delivery rate, quality/defect rate, price variance, and overall score"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Spend by Vendor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/spend/by-vendor",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "analytics",
+                "spend",
+                "by-vendor"
+              ]
+            },
+            "description": "Spend distribution analytics aggregated by vendor"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vendor Performance Rankings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/vendors/performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "analytics",
+                "vendors",
+                "performance"
+              ]
+            },
+            "description": "Comprehensive vendor leaderboard ranked by composite procurement score"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09. Transactional Outbox",
+      "item": [
+        {
+          "name": "List Outbox Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events?limit=20&status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "outbox",
+                "events?limit=20&status=pending"
+              ]
+            },
+            "description": "Query transactional outbox domain events by status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "\nif (pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.events && jsonData.events.length > 0) {\n        pm.environment.set(\"outbox_event_id\", jsonData.events[0].id);\n        console.log(\"Saved outbox_event_id: \" + jsonData.events[0].id);\n    }\n}\n"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Outbox Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events/{{outbox_event_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "outbox",
+                "events",
+                "{{outbox_event_id}}"
+              ]
+            },
+            "description": "Inspect published domain event payload, headers, and retry count"
+          },
+          "response": []
+        },
+        {
+          "name": "Retry Failed Outbox Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events/{{outbox_event_id}}/retry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{apiPrefix}}",
+                "outbox",
+                "events",
+                "{{outbox_event_id}}",
+                "retry"
+              ]
+            },
+            "description": "Reset retry counter and schedule event for immediate re-publishing"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
