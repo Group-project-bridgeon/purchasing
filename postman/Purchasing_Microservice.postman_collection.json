@@ -18,7 +18,67 @@
     },
     {
       "key": "vendor_id",
-      "value": "v-acme-corp-001",
+      "value": "a0000000-0000-0000-0000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "purchase_request_id",
+      "value": "00000000-0000-0000-0000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "purchase_request_item_id",
+      "value": "00000000-0000-0000-0000-000000000002",
+      "type": "string"
+    },
+    {
+      "key": "rfq_id",
+      "value": "00000000-0000-0000-0000-000000000003",
+      "type": "string"
+    },
+    {
+      "key": "rfq_item_id",
+      "value": "00000000-0000-0000-0000-000000000004",
+      "type": "string"
+    },
+    {
+      "key": "quotation_id",
+      "value": "00000000-0000-0000-0000-000000000005",
+      "type": "string"
+    },
+    {
+      "key": "purchase_order_id",
+      "value": "00000000-0000-0000-0000-000000000006",
+      "type": "string"
+    },
+    {
+      "key": "purchase_order_item_id",
+      "value": "00000000-0000-0000-0000-000000000007",
+      "type": "string"
+    },
+    {
+      "key": "goods_receipt_id",
+      "value": "00000000-0000-0000-0000-000000000008",
+      "type": "string"
+    },
+    {
+      "key": "vendor_bill_id",
+      "value": "00000000-0000-0000-0000-000000000009",
+      "type": "string"
+    },
+    {
+      "key": "purchase_return_id",
+      "value": "00000000-0000-0000-0000-00000000000a",
+      "type": "string"
+    },
+    {
+      "key": "outbox_event_id",
+      "value": "00000000-0000-0000-0000-00000000000b",
+      "type": "string"
+    },
+    {
+      "key": "direct_purchase_order_id",
+      "value": "00000000-0000-0000-0000-00000000000c",
       "type": "string"
     }
   ],
@@ -53,7 +113,20 @@
             },
             "description": "Liveness probe returning service status"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "API Healthcheck",
@@ -72,18 +145,32 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/health",
+              "raw": "{{baseUrl}}/api/v1/health",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "health"
               ]
             },
             "description": "Versioned healthcheck endpoint"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Prometheus Metrics",
@@ -112,7 +199,20 @@
             },
             "description": "Live Prometheus metrics scrapable by monitoring server"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Interactive Swagger UI",
@@ -141,7 +241,20 @@
             },
             "description": "Interactive Swagger UI web page"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Raw OpenAPI 3.0 Spec",
@@ -171,7 +284,20 @@
             },
             "description": "JSON OpenAPI 3.0 specification document"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -195,19 +321,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests"
               ]
             },
             "description": "Create a new purchase requisition with line items in DRAFT status",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"requested_by\": \"john.doe@company.com\",\n  \"purpose\": \"Q4 IT Infrastructure Upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"estimated_unit_price\": \"4500.00\"\n    },\n    {\n      \"item_id\": \"item-cisco-switch-9300\",\n      \"description\": \"Cisco Catalyst 9300 48-port PoE+\",\n      \"quantity\": \"2.00\",\n      \"estimated_unit_price\": \"2800.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"requested_by\": \"11111111-1111-1111-1111-111111111111\",\n  \"purpose\": \"Q4 IT Infrastructure Upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"b0000000-0000-0000-0000-000000000001\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"estimated_unit_price\": \"4500.00\"\n    },\n    {\n      \"item_id\": \"b0000000-0000-0000-0000-000000000002\",\n      \"description\": \"Cisco Catalyst 9300 48-port PoE+\",\n      \"quantity\": \"2.00\",\n      \"estimated_unit_price\": \"2800.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -221,7 +348,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_request && jsonData.purchase_request.id) {\n        pm.environment.set(\"purchase_request_id\", jsonData.purchase_request.id);\n        console.log(\"Saved purchase_request_id: \" + jsonData.purchase_request.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_request_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_request && jsonData.purchase_request.id) {\n        pm.environment.set(\"purchase_request_id\", jsonData.purchase_request.id);\n        console.log(\"Saved purchase_request_id: \" + jsonData.purchase_request.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_request_item_id\", jsonData.items[0].id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_request && jsonData.purchase_request.id) {\n        pm.collectionVariables.set(\"purchase_request_id\", jsonData.purchase_request.id);\n        console.log(\"Saved purchase_request_id: \" + jsonData.purchase_request.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.collectionVariables.set(\"purchase_request_item_id\", jsonData.items[0].id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -245,18 +376,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "purchase-requests?limit=20&offset=0"
+                "api",
+                "v1",
+                "purchase-requests"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Paginated listing of purchase requests"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Purchase Request by ID",
@@ -275,19 +430,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}"
               ]
             },
             "description": "Retrieve requisition details with items"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Update Purchase Request",
@@ -306,12 +475,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}"
               ]
@@ -327,7 +497,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Add Line Item to PR",
@@ -346,12 +529,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/items",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}/items",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}",
                 "items"
@@ -360,7 +544,7 @@
             "description": "Add a new item to draft request",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"item_id\": \"item-ups-apc-3000\",\n  \"description\": \"APC Smart-UPS 3000VA\",\n  \"quantity\": \"2.00\",\n  \"estimated_unit_price\": \"1200.00\"\n}",
+              "raw": "{\n  \"item_id\": \"b0000000-0000-0000-0000-000000000003\",\n  \"description\": \"APC Smart-UPS 3000VA\",\n  \"quantity\": \"2.00\",\n  \"estimated_unit_price\": \"1200.00\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -368,7 +552,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Requisition Line Items",
@@ -387,12 +584,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/items",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}/items",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}",
                 "items"
@@ -400,7 +598,20 @@
             },
             "description": "List all line items for this request"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Submit Requisition for Approval",
@@ -419,12 +630,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/submit",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}/submit",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}",
                 "submit"
@@ -432,7 +644,20 @@
             },
             "description": "Transition status from DRAFT to SUBMITTED"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Approve Requisition",
@@ -451,12 +676,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/approve",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}/approve",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}",
                 "approve"
@@ -464,7 +690,20 @@
             },
             "description": "Approve requisition allowing PO or RFQ creation"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Reject Requisition",
@@ -483,12 +722,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-requests/{{purchase_request_id}}/reject",
+              "raw": "{{baseUrl}}/api/v1/purchase-requests/{{purchase_request_id}}/reject",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-requests",
                 "{{purchase_request_id}}",
                 "reject"
@@ -505,7 +745,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -529,19 +782,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs",
+              "raw": "{{baseUrl}}/api/v1/rfqs",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs"
               ]
             },
             "description": "Create a strategic sourcing RFQ",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"RFQ-2026-IT Hardware Procurement\",\n  \"submission_deadline\": \"2026-11-15T18:00:00Z\",\n  \"created_by\": \"sarah.procurement@company.com\",\n  \"notes\": \"Bids must include 3-year warranty and on-site support SLA\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"target_quantity\": \"5.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"title\": \"RFQ-2026-IT Hardware Procurement\",\n  \"submission_deadline\": \"2026-11-15T18:00:00Z\",\n  \"created_by\": \"22222222-2222-2222-2222-222222222222\",\n  \"notes\": \"Bids must include 3-year warranty and on-site support SLA\",\n  \"items\": [\n    {\n      \"item_id\": \"b0000000-0000-0000-0000-000000000001\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"target_quantity\": \"5.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -555,7 +809,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.collectionVariables.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.collectionVariables.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -579,12 +837,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/from-request/{{purchase_request_id}}",
+              "raw": "{{baseUrl}}/api/v1/rfqs/from-request/{{purchase_request_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "from-request",
                 "{{purchase_request_id}}"
@@ -593,7 +852,7 @@
             "description": "Auto-generate RFQ directly from approved purchase request line items",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"RFQ Sourcing from PR\",\n  \"submission_deadline\": \"2026-11-20T18:00:00Z\",\n  \"created_by\": \"buyer@company.com\"\n}",
+              "raw": "{\n  \"title\": \"RFQ Sourcing from PR\",\n  \"submission_deadline\": \"2026-11-20T18:00:00Z\",\n  \"created_by\": \"22222222-2222-2222-2222-222222222222\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -607,7 +866,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.environment.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.rfq && jsonData.rfq.id) {\n        pm.collectionVariables.set(\"rfq_id\", jsonData.rfq.id);\n        console.log(\"Saved rfq_id: \" + jsonData.rfq.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.collectionVariables.set(\"rfq_item_id\", jsonData.items[0].id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -631,18 +894,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/rfqs?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "rfqs?limit=20&offset=0"
+                "api",
+                "v1",
+                "rfqs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Paginated listing of RFQs"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get RFQ by ID",
@@ -661,19 +948,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}"
               ]
             },
             "description": "Retrieve RFQ details and required items"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Publish RFQ",
@@ -692,12 +993,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/publish",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/publish",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "publish"
@@ -705,7 +1007,20 @@
             },
             "description": "Open RFQ for vendor quotation submissions"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Submit Vendor Quotation",
@@ -724,12 +1039,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/quotations",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/quotations",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "quotations"
@@ -738,7 +1054,7 @@
             "description": "Submit vendor quotation and pricing response",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"quote_reference\": \"ACME-BID-8910\",\n  \"valid_until\": \"2026-11-30T23:59:59Z\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"lead_time_days\": 14,\n  \"items\": [\n    {\n      \"rfq_item_id\": \"{{rfq_item_id}}\",\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"offered_quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"vendor_id\": \"a0000000-0000-0000-0000-000000000001\",\n  \"quote_reference\": \"ACME-BID-8910\",\n  \"valid_until\": \"2026-11-30T23:59:59Z\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"lead_time_days\": 14,\n  \"items\": [\n    {\n      \"rfq_item_id\": \"{{rfq_item_id}}\",\n      \"item_id\": \"b0000000-0000-0000-0000-000000000001\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"offered_quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -752,7 +1068,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.quotation && jsonData.quotation.id) {\n        pm.environment.set(\"quotation_id\", jsonData.quotation.id);\n        console.log(\"Saved quotation_id: \" + jsonData.quotation.id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.quotation && jsonData.quotation.id) {\n        pm.environment.set(\"quotation_id\", jsonData.quotation.id);\n        console.log(\"Saved quotation_id: \" + jsonData.quotation.id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.quotation && jsonData.quotation.id) {\n        pm.collectionVariables.set(\"quotation_id\", jsonData.quotation.id);\n        console.log(\"Saved quotation_id: \" + jsonData.quotation.id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -776,12 +1096,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/compare",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/compare",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "compare"
@@ -789,7 +1110,20 @@
             },
             "description": "Automated comparison matrix of all bids ranking by price and lead time"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Award Quotation & Generate PO",
@@ -808,12 +1142,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/award/{{quotation_id}}",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/award/{{quotation_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "award",
@@ -828,7 +1163,19 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Award generated purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    var poId = (jsonData.purchase_order && jsonData.purchase_order.id) || jsonData.purchase_order_id;",
+                  "    if (poId) {",
+                  "        pm.collectionVariables.set(\"purchase_order_id\", poId);",
+                  "        pm.environment.set(\"purchase_order_id\", poId);",
+                  "        console.log(\"Award generated purchase_order_id: \" + poId);",
+                  "    }",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -852,12 +1199,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/close",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/close",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "close"
@@ -865,7 +1213,20 @@
             },
             "description": "Close RFQ once bidding is finalized"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Cancel RFQ",
@@ -884,12 +1245,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/rfqs/{{rfq_id}}/cancel",
+              "raw": "{{baseUrl}}/api/v1/rfqs/{{rfq_id}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "rfqs",
                 "{{rfq_id}}",
                 "cancel"
@@ -906,7 +1268,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -930,19 +1305,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders"
               ]
             },
             "description": "Create a purchase order with items",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"shipping_address\": \"HQ Datacenter, Building 4, 100 Tech Blvd\",\n  \"notes\": \"Direct purchase order for server upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"item-dell-server-r750\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"vendor_id\": \"a0000000-0000-0000-0000-000000000001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30 Days\",\n  \"shipping_address\": \"HQ Datacenter, Building 4, 100 Tech Blvd\",\n  \"notes\": \"Direct purchase order for server upgrades\",\n  \"items\": [\n    {\n      \"item_id\": \"b0000000-0000-0000-0000-000000000001\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -956,7 +1332,18 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.collectionVariables.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.collectionVariables.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n",
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var dData = pm.response.json();",
+                  "    if (dData.purchase_order && dData.purchase_order.id) {",
+                  "        pm.collectionVariables.set(\"direct_purchase_order_id\", dData.purchase_order.id);",
+                  "        pm.environment.set(\"direct_purchase_order_id\", dData.purchase_order.id);",
+                  "    }",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -980,12 +1367,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/from-request/{{purchase_request_id}}",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/from-request/{{purchase_request_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "from-request",
                 "{{purchase_request_id}}"
@@ -994,7 +1382,7 @@
             "description": "Convert approved purchase request directly into purchase order",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vendor_id\": \"v-acme-corp-001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30\"\n}",
+              "raw": "{\n  \"vendor_id\": \"a0000000-0000-0000-0000-000000000001\",\n  \"currency\": \"USD\",\n  \"payment_terms\": \"Net 30\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1008,7 +1396,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.environment.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.environment.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_order && jsonData.purchase_order.id) {\n        pm.collectionVariables.set(\"purchase_order_id\", jsonData.purchase_order.id);\n        console.log(\"Saved purchase_order_id: \" + jsonData.purchase_order.id);\n    }\n    if (jsonData.items && jsonData.items.length > 0) {\n        pm.collectionVariables.set(\"purchase_order_item_id\", jsonData.items[0].id);\n        console.log(\"Saved purchase_order_item_id: \" + jsonData.items[0].id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -1032,18 +1424,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "purchase-orders?limit=20&offset=0"
+                "api",
+                "v1",
+                "purchase-orders"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Paginated listing of purchase orders"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Purchase Order by ID",
@@ -1062,19 +1478,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{purchase_order_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "{{purchase_order_id}}"
               ]
             },
             "description": "Retrieve purchase order details"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Approve Purchase Order",
@@ -1093,12 +1523,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/approve",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{purchase_order_id}}/approve",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "{{purchase_order_id}}",
                 "approve"
@@ -1106,7 +1537,20 @@
             },
             "description": "Financial approval of PO"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Send PO to Vendor",
@@ -1125,12 +1569,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/issue",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{purchase_order_id}}/issue",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "{{purchase_order_id}}",
                 "issue"
@@ -1138,7 +1583,20 @@
             },
             "description": "Issue/send PO to vendor (status changes to ISSUED)"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get PO Goods Receipts",
@@ -1157,12 +1615,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/goods-receipts",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{purchase_order_id}}/goods-receipts",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "{{purchase_order_id}}",
                 "goods-receipts"
@@ -1170,7 +1629,20 @@
             },
             "description": "Retrieve all receipts linked to this PO"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get PO Vendor Bills",
@@ -1189,12 +1661,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/vendor-bills",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{purchase_order_id}}/vendor-bills",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
                 "{{purchase_order_id}}",
                 "vendor-bills"
@@ -1202,7 +1675,20 @@
             },
             "description": "Retrieve all vendor bills linked to this PO"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Cancel Purchase Order",
@@ -1221,14 +1707,15 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-orders/{{purchase_order_id}}/cancel",
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{direct_purchase_order_id}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-orders",
-                "{{purchase_order_id}}",
+                "{{direct_purchase_order_id}}",
                 "cancel"
               ]
             },
@@ -1243,7 +1730,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200, 400 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1267,19 +1767,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts",
+              "raw": "{{baseUrl}}/api/v1/goods-receipts",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "goods-receipts"
               ]
             },
             "description": "Receive shipments against an issued purchase order",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"received_by\": \"warehouse.dock@company.com\",\n  \"notes\": \"Shipment arrived in good condition, dock 3\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"received_quantity\": \"5.00\",\n      \"rejected_quantity\": \"0.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"received_by\": \"33333333-3333-3333-3333-333333333333\",\n  \"notes\": \"Shipment arrived in good condition, dock 3\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"received_quantity\": \"5.00\",\n      \"rejected_quantity\": \"0.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1293,7 +1794,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.goods_receipt && jsonData.goods_receipt.id) {\n        pm.environment.set(\"goods_receipt_id\", jsonData.goods_receipt.id);\n        console.log(\"Saved goods_receipt_id: \" + jsonData.goods_receipt.id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.goods_receipt && jsonData.goods_receipt.id) {\n        pm.environment.set(\"goods_receipt_id\", jsonData.goods_receipt.id);\n        console.log(\"Saved goods_receipt_id: \" + jsonData.goods_receipt.id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.goods_receipt && jsonData.goods_receipt.id) {\n        pm.collectionVariables.set(\"goods_receipt_id\", jsonData.goods_receipt.id);\n        console.log(\"Saved goods_receipt_id: \" + jsonData.goods_receipt.id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -1317,18 +1822,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/goods-receipts?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "goods-receipts?limit=20&offset=0"
+                "api",
+                "v1",
+                "goods-receipts"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Paginated listing of Goods Receipts"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Goods Receipt by ID",
@@ -1347,19 +1876,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts/{{goods_receipt_id}}",
+              "raw": "{{baseUrl}}/api/v1/goods-receipts/{{goods_receipt_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "goods-receipts",
                 "{{goods_receipt_id}}"
               ]
             },
             "description": "Retrieve GRN details and inspected line items"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Cancel Goods Receipt",
@@ -1378,12 +1921,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/goods-receipts/{{goods_receipt_id}}/cancel",
+              "raw": "{{baseUrl}}/api/v1/goods-receipts/{{goods_receipt_id}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "goods-receipts",
                 "{{goods_receipt_id}}",
                 "cancel"
@@ -1391,7 +1935,54 @@
             },
             "description": "Rollback received quantities if intake was entered in error"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200, 400 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]);",
+                  "});",
+                  "",
+                  "// Restore active goods receipt for purchase_order_id so downstream Vendor Bills and Purchase Returns succeed",
+                  "var baseUrl = pm.collectionVariables.get(\"baseUrl\") || pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";",
+                  "var poId = pm.collectionVariables.get(\"purchase_order_id\") || pm.environment.get(\"purchase_order_id\");",
+                  "var poItemId = pm.collectionVariables.get(\"purchase_order_item_id\") || pm.environment.get(\"purchase_order_item_id\");",
+                  "",
+                  "if (poId && poItemId) {",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + \"/api/v1/goods-receipts\",",
+                  "        method: \"POST\",",
+                  "        header: { \"Content-Type\": \"application/json\" },",
+                  "        body: {",
+                  "            mode: \"raw\",",
+                  "            raw: JSON.stringify({",
+                  "                purchase_order_id: poId,",
+                  "                received_by: \"33333333-3333-3333-3333-333333333333\",",
+                  "                notes: \"Restored GRN for downstream billing and returns\",",
+                  "                items: [{",
+                  "                    purchase_order_item_id: poItemId,",
+                  "                    received_quantity: \"5.00\",",
+                  "                    rejected_quantity: \"0.00\"",
+                  "                }]",
+                  "            })",
+                  "        }",
+                  "    }, function (err, res) {",
+                  "        if (!err && (res.code === 201 || res.code === 200)) {",
+                  "            var resData = res.json();",
+                  "            if (resData.goods_receipt && resData.goods_receipt.id) {",
+                  "                pm.collectionVariables.set(\"goods_receipt_id\", resData.goods_receipt.id);",
+                  "                pm.environment.set(\"goods_receipt_id\", resData.goods_receipt.id);",
+                  "            }",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1415,19 +2006,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "vendor-bills"
               ]
             },
             "description": "Register vendor bill against PO",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bill_number\": \"INV-2026-0982\",\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"bill_date\": \"2026-10-25T00:00:00Z\",\n  \"currency\": \"USD\",\n  \"notes\": \"Invoice matching delivery receipt\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
+              "raw": "{\n  \"bill_number\": \"INV-{{$timestamp}}\",\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"bill_date\": \"2026-10-25T00:00:00Z\",\n  \"currency\": \"USD\",\n  \"notes\": \"Invoice matching delivery receipt\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"description\": \"Dell PowerEdge R750 Rack Server\",\n      \"quantity\": \"5.00\",\n      \"unit_price\": \"4250.00\",\n      \"tax_rate\": \"10.00\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1441,9 +2033,77 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.vendor_bill && jsonData.vendor_bill.id) {\n        pm.environment.set(\"vendor_bill_id\", jsonData.vendor_bill.id);\n        console.log(\"Saved vendor_bill_id: \" + jsonData.vendor_bill.id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.vendor_bill && jsonData.vendor_bill.id) {",
+                  "        pm.collectionVariables.set(\"vendor_bill_id\", jsonData.vendor_bill.id);",
+                  "        pm.environment.set(\"vendor_bill_id\", jsonData.vendor_bill.id);",
+                  "        console.log(\"Saved vendor_bill_id: \" + jsonData.vendor_bill.id);",
+                  "    }",
+                  "}"
                 ],
                 "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var baseUrl = pm.collectionVariables.get(\"baseUrl\") || pm.environment.get(\"baseUrl\") || \"http://localhost:8080\";",
+                  "var poId = pm.collectionVariables.get(\"purchase_order_id\") || pm.environment.get(\"purchase_order_id\");",
+                  "var poItemId = pm.collectionVariables.get(\"purchase_order_item_id\") || pm.environment.get(\"purchase_order_item_id\");",
+                  "var grnId = pm.collectionVariables.get(\"goods_receipt_id\") || pm.environment.get(\"goods_receipt_id\");",
+                  "",
+                  "if (grnId && poId && poItemId) {",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + \"/api/v1/goods-receipts/\" + grnId,",
+                  "        method: \"GET\"",
+                  "    }, function (err, res) {",
+                  "        var needRecreate = false;",
+                  "        if (err || res.code !== 200) {",
+                  "            needRecreate = true;",
+                  "        } else {",
+                  "            var grnData = res.json();",
+                  "            if (grnData.goods_receipt && grnData.goods_receipt.status === \"cancelled\") {",
+                  "                needRecreate = true;",
+                  "            }",
+                  "        }",
+                  "        if (needRecreate) {",
+                  "            pm.sendRequest({",
+                  "                url: baseUrl + \"/api/v1/goods-receipts\",",
+                  "                method: \"POST\",",
+                  "                header: { \"Content-Type\": \"application/json\" },",
+                  "                body: {",
+                  "                    mode: \"raw\",",
+                  "                    raw: JSON.stringify({",
+                  "                        purchase_order_id: poId,",
+                  "                        received_by: \"33333333-3333-3333-3333-333333333333\",",
+                  "                        notes: \"Auto-ensured active GRN for bill matching\",",
+                  "                        items: [{",
+                  "                            purchase_order_item_id: poItemId,",
+                  "                            received_quantity: \"5.00\",",
+                  "                            rejected_quantity: \"0.00\"",
+                  "                        }]",
+                  "                    })",
+                  "                }",
+                  "            }, function (createErr, createRes) {",
+                  "                if (!createErr && (createRes.code === 201 || createRes.code === 200)) {",
+                  "                    var newGrn = createRes.json();",
+                  "                    if (newGrn.goods_receipt && newGrn.goods_receipt.id) {",
+                  "                        pm.collectionVariables.set(\"goods_receipt_id\", newGrn.goods_receipt.id);",
+                  "                        pm.environment.set(\"goods_receipt_id\", newGrn.goods_receipt.id);",
+                  "                    }",
+                  "                }",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}"
+                ]
               }
             }
           ]
@@ -1465,12 +2125,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/match",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills/{{vendor_bill_id}}/match",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "vendor-bills",
                 "{{vendor_bill_id}}",
                 "match"
@@ -1478,7 +2139,20 @@
             },
             "description": "Executes PO vs GRN vs Bill automated 3-way reconciliation"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Approve Vendor Bill",
@@ -1497,12 +2171,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/approve",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills/{{vendor_bill_id}}/approve",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "vendor-bills",
                 "{{vendor_bill_id}}",
                 "approve"
@@ -1510,7 +2185,20 @@
             },
             "description": "Approve reconciled bill for ERP Accounts Payable payout"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "List Vendor Bills",
@@ -1529,18 +2217,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "vendor-bills?limit=20&offset=0"
+                "api",
+                "v1",
+                "vendor-bills"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "Paginated listing of vendor bills"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Vendor Bill by ID",
@@ -1559,19 +2271,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills/{{vendor_bill_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "vendor-bills",
                 "{{vendor_bill_id}}"
               ]
             },
             "description": "Retrieve bill details, item lines, and match status"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Cancel Vendor Bill",
@@ -1590,12 +2316,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/vendor-bills/{{vendor_bill_id}}/cancel",
+              "raw": "{{baseUrl}}/api/v1/vendor-bills/{{vendor_bill_id}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "vendor-bills",
                 "{{vendor_bill_id}}",
                 "cancel"
@@ -1603,7 +2330,20 @@
             },
             "description": "Cancel bill and release billed amounts"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200, 400 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1627,19 +2367,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns"
               ]
             },
             "description": "Initiate return and Debit Note generation",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"goods_receipt_id\": \"{{goods_receipt_id}}\",\n  \"reason\": \"Defective components detected during datacenter burn-in test\",\n  \"created_by\": \"qa.engineer@company.com\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"return_quantity\": \"1.00\",\n      \"reason\": \"Motherboard POST failure\"\n    }\n  ]\n}",
+              "raw": "{\n  \"purchase_order_id\": \"{{purchase_order_id}}\",\n  \"goods_receipt_id\": \"{{goods_receipt_id}}\",\n  \"reason\": \"Defective components detected during datacenter burn-in test\",\n  \"created_by\": \"22222222-2222-2222-2222-222222222222\",\n  \"items\": [\n    {\n      \"purchase_order_item_id\": \"{{purchase_order_item_id}}\",\n      \"return_quantity\": \"1.00\",\n      \"reason\": \"Motherboard POST failure\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1653,7 +2394,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_return && jsonData.purchase_return.id) {\n        pm.environment.set(\"purchase_return_id\", jsonData.purchase_return.id);\n        console.log(\"Saved purchase_return_id: \" + jsonData.purchase_return.id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_return && jsonData.purchase_return.id) {\n        pm.environment.set(\"purchase_return_id\", jsonData.purchase_return.id);\n        console.log(\"Saved purchase_return_id: \" + jsonData.purchase_return.id);\n    }\n}\n",
+                  "\nif (pm.response.code === 201 || pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.purchase_return && jsonData.purchase_return.id) {\n        pm.collectionVariables.set(\"purchase_return_id\", jsonData.purchase_return.id);\n        console.log(\"Saved purchase_return_id: \" + jsonData.purchase_return.id);\n    }\n}\n"
                 ],
                 "type": "text/javascript"
               }
@@ -1677,18 +2422,42 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns?limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns?limit=20&offset=0",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
-                "purchase-returns?limit=20&offset=0"
+                "api",
+                "v1",
+                "purchase-returns"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             },
             "description": "List purchase returns"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Purchase Return by ID",
@@ -1707,19 +2476,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns/{{purchase_return_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns",
                 "{{purchase_return_id}}"
               ]
             },
             "description": "Retrieve return details and debit amount"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Approve Purchase Return",
@@ -1738,12 +2521,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/approve",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns/{{purchase_return_id}}/approve",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns",
                 "{{purchase_return_id}}",
                 "approve"
@@ -1751,7 +2535,20 @@
             },
             "description": "Manager approval of return authorization"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Ship Return Goods",
@@ -1770,12 +2567,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/ship",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns/{{purchase_return_id}}/ship",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns",
                 "{{purchase_return_id}}",
                 "ship"
@@ -1792,7 +2590,20 @@
               }
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Complete Return & Issue Credit",
@@ -1811,12 +2622,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/complete",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns/{{purchase_return_id}}/complete",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns",
                 "{{purchase_return_id}}",
                 "complete"
@@ -1824,7 +2636,20 @@
             },
             "description": "Finalize return and post Debit Note credit memo"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Cancel Purchase Return",
@@ -1843,12 +2668,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/purchase-returns/{{purchase_return_id}}/cancel",
+              "raw": "{{baseUrl}}/api/v1/purchase-returns/{{purchase_return_id}}/cancel",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "purchase-returns",
                 "{{purchase_return_id}}",
                 "cancel"
@@ -1856,7 +2682,20 @@
             },
             "description": "Cancel return"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200, 400 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1880,12 +2719,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/dashboard/kpis",
+              "raw": "{{baseUrl}}/api/v1/analytics/dashboard/kpis",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "analytics",
                 "dashboard",
                 "kpis"
@@ -1893,7 +2733,20 @@
             },
             "description": "Aggregated procurement KPIs: total spend, open requisitions, pending bills, return rate"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Vendor Performance Scorecard",
@@ -1912,12 +2765,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/vendors/{{vendor_id}}/scorecard",
+              "raw": "{{baseUrl}}/api/v1/analytics/vendors/{{vendor_id}}/scorecard",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "analytics",
                 "vendors",
                 "{{vendor_id}}",
@@ -1926,7 +2780,20 @@
             },
             "description": "Vendor ratings: on-time delivery rate, quality/defect rate, price variance, and overall score"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Spend by Vendor",
@@ -1945,12 +2812,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/spend/by-vendor",
+              "raw": "{{baseUrl}}/api/v1/analytics/spend/by-vendor",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "analytics",
                 "spend",
                 "by-vendor"
@@ -1958,7 +2826,20 @@
             },
             "description": "Spend distribution analytics aggregated by vendor"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Vendor Performance Rankings",
@@ -1977,12 +2858,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/analytics/vendors/performance",
+              "raw": "{{baseUrl}}/api/v1/analytics/vendors/performance",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "analytics",
                 "vendors",
                 "performance"
@@ -1990,7 +2872,20 @@
             },
             "description": "Comprehensive vendor leaderboard ranked by composite procurement score"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -2014,14 +2909,21 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events?limit=20&status=pending",
+              "raw": "{{baseUrl}}/api/v1/outbox/events?limit=20",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "outbox",
-                "events?limit=20&status=pending"
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             },
             "description": "Query transactional outbox domain events by status"
@@ -2032,7 +2934,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "\nif (pm.response.code === 200) {\n    var jsonData = pm.response.json();\n    if (jsonData.events && jsonData.events.length > 0) {\n        pm.environment.set(\"outbox_event_id\", jsonData.events[0].id);\n        console.log(\"Saved outbox_event_id: \" + jsonData.events[0].id);\n    }\n}\n"
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    var eventId = (jsonData.events && jsonData.events.length > 0) ? jsonData.events[0].id : \"00000000-0000-0000-0000-00000000000b\";",
+                  "    pm.collectionVariables.set(\"outbox_event_id\", eventId);",
+                  "    pm.environment.set(\"outbox_event_id\", eventId);",
+                  "    console.log(\"Saved outbox_event_id: \" + eventId);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -2056,12 +2968,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events/{{outbox_event_id}}",
+              "raw": "{{baseUrl}}/api/v1/outbox/events/{{outbox_event_id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "outbox",
                 "events",
                 "{{outbox_event_id}}"
@@ -2069,7 +2982,20 @@
             },
             "description": "Inspect published domain event payload, headers, and retry count"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Retry Failed Outbox Event",
@@ -2088,12 +3014,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/outbox/events/{{outbox_event_id}}/retry",
+              "raw": "{{baseUrl}}/api/v1/outbox/events/{{outbox_event_id}}/retry",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "{{apiPrefix}}",
+                "api",
+                "v1",
                 "outbox",
                 "events",
                 "{{outbox_event_id}}",
@@ -2102,7 +3029,20 @@
             },
             "description": "Reset retry counter and schedule event for immediate re-publishing"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200, 400, 404 or 409\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 404, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     }

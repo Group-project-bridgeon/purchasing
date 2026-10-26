@@ -58,4 +58,14 @@ func TestSetupRouter_SystemEndpoints(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200 from /metrics, got %d", resp.StatusCode)
 	}
+
+	// Test 5: Double Slash Normalization (e.g. //health)
+	req = httptest.NewRequest(http.MethodGet, "//health", nil)
+	resp, err = app.Test(req)
+	if err != nil {
+		t.Fatalf("unexpected error on //health: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from //health, got %d", resp.StatusCode)
+	}
 }

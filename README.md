@@ -315,10 +315,10 @@ A top-level `Makefile` is provided for standard developer workflows:
 | Target | Description | Command |
 |---|---|---|
 | `make help` | Display available targets and descriptions | `make help` |
-| `make run` | Run service locally with `.env` | `go run ./cmd/server` |
+| `make run` | Run service locally (auto-starts PostgreSQL, loads `.env`) | `make run` |
 | `make build` | Compile optimized Linux binary into `bin/purchasing` | `CGO_ENABLED=0 go build ...` |
 | `make test` | Run fast unit test suite | `go test -v -count=1 ./internal/service/...` |
-| `make test-all` | Run all tests including DB integration tests | `go test -v -count=1 ./...` |
+| `make test-all` | Run all tests including DB integration tests (auto-starts PostgreSQL) | `go test -v -count=1 ./...` |
 | `make test-coverage`| Run unit tests and generate HTML coverage report | `go test -coverprofile=...` |
 | `make vet` | Run static code analysis with `go vet` | `go vet ./...` |
 | `make fmt` | Format all Go source files | `go fmt ./...` |
@@ -327,7 +327,10 @@ A top-level `Makefile` is provided for standard developer workflows:
 | `make docker-up` | Build & start the full service stack (App + Postgres) | `docker compose up -d --build` |
 | `make docker-down`| Stop all containers and networks | `docker compose down` |
 | `make docker-logs`| Tail logs of `purchasing-service` | `docker compose logs -f purchasing-service` |
-| `make db-up` | Start PostgreSQL container only for local dev | `docker compose up -d postgres` |
+| `make db-up` | Start PostgreSQL container in docker for local dev | `docker compose up -d postgres` |
+| `make db-wait` | Ensure PostgreSQL is running and ready to accept connections | `make db-wait` |
+| `make db-down` | Stop PostgreSQL container | `docker compose stop postgres` |
+| `make db-logs` | Tail logs of PostgreSQL container | `docker compose logs -f postgres` |
 | `make db-shell` | Open interactive `psql` shell in Postgres | `docker compose exec postgres psql ...` |
 | `make ci` | Run complete CI checks locally (fmt, vet, test) | `make ci` |
 

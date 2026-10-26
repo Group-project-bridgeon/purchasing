@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/docs"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
@@ -28,6 +30,18 @@ func SetupRouter(
 	handlers Handlers,
 	routesCfg *config.RoutesConfig,
 ) {
+	// 0. Normalize duplicate slashes (e.g. "//api/v1" -> "/api/v1")
+	app.Use(func(c *fiber.Ctx) error {
+		p := c.Path()
+		if strings.Contains(p, "//") {
+			for strings.Contains(p, "//") {
+				p = strings.ReplaceAll(p, "//", "/")
+			}
+			c.Path(p)
+		}
+		return c.Next()
+	})
+
 	// 1. Mount Global Middleware Pipeline
 	app.Use(middleware.RequestID())
 	app.Use(middleware.Metrics())

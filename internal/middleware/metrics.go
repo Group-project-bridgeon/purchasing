@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/metrics"
@@ -20,17 +21,20 @@ func Metrics() fiber.Handler {
 
 		duration := time.Since(start)
 		statusCode := c.Response().StatusCode()
-		method := c.Method()
 
-		// Use route path template (e.g., "/api/v1/purchase-orders/:id") to avoid high-cardinality explosions.
-		routePath := ""
-		if r := c.Route(); r != nil && r.Path != "" {
-			routePath = r.Path
-		} else {
-			routePath = "unmatched"
+		method := c.Method()
+		routePath := "unmatched"
+
+		if r := c.Route(); r != nil {
+			if r.Method != "" {
+				method = r.Method
+			}
+			if r.Path != "" {
+				routePath = r.Path
+			}
 		}
 
-		metrics.RecordHTTPRequest(method, routePath, statusCode, duration)
+		metrics.RecordHTTPRequest(strings.Clone(method), strings.Clone(routePath), statusCode, duration)
 
 		return err
 	}
