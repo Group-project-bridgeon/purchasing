@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "Purchasing Microservice Dashboards"
+    orgId: 1
+    folder: "Purchasing"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
