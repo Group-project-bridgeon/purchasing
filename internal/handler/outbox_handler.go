@@ -43,7 +43,7 @@ func (h *OutboxHandler) List(c *fiber.Ctx) error {
 	events, err := h.service.ListEvents(c.UserContext(), filter)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -83,7 +83,7 @@ func (h *OutboxHandler) Retry(c *fiber.Ctx) error {
 
 	if err := h.service.RetryEvent(c.UserContext(), id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

@@ -3,12 +3,14 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
+	"github.com/Group-project-bridgeon/purchasing/internal/logger"
 	"github.com/Group-project-bridgeon/purchasing/internal/metrics"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
 )
@@ -18,24 +20,7 @@ type EventDispatcher interface {
 	Dispatch(ctx context.Context, event *domain.OutboxEvent) error
 }
 
-// LogEventDispatcher is a built-in dispatcher that logs outgoing domain events.
-type LogEventDispatcher struct{}
-
-func NewLogEventDispatcher() *LogEventDispatcher {
-	return &LogEventDispatcher{}
-}
-
-func (d *LogEventDispatcher) Dispatch(ctx context.Context, event *domain.OutboxEvent) error {
-	slog.InfoContext(
-		ctx,
-		"outbox_event_dispatched",
-		slog.String("event_type", event.EventType),
-		slog.String("aggregate_type", event.AggregateType),
-		slog.String("aggregate_id", event.AggregateID),
-		slog.String("event_id", event.ID),
-	)
-	return nil
-}
+var ErrDispatcherNotConfigured = errors.New("production outbox dispatcher is not configured")
 
 // OutboxService manages outbox event querying, manual retries, and background publishing.
 type OutboxService interface {
@@ -49,19 +34,20 @@ type OutboxService interface {
 }
 
 type outboxService struct {
-	repo       repository.OutboxRepository
-	dispatcher EventDispatcher
-	stopChan   chan struct{}
-	wg         sync.WaitGroup
+	repo         repository.OutboxRepository
+	dispatcher   EventDispatcher
+	stopChan     chan struct{}
+	stopOnce     sync.Once
+	startOnce    sync.Once
+	workerCancel context.CancelFunc
+	workerMu     sync.Mutex
+	wg           sync.WaitGroup
 }
 
 func NewOutboxService(
 	repo repository.OutboxRepository,
 	dispatcher EventDispatcher,
 ) OutboxService {
-	if dispatcher == nil {
-		dispatcher = NewLogEventDispatcher()
-	}
 
 	return &outboxService{
 		repo:       repo,
@@ -127,6 +113,9 @@ func (s *outboxService) ProcessBatch(
 	ctx context.Context,
 	batchSize int32,
 ) (int, error) {
+	if s.dispatcher == nil {
+		return 0, ErrDispatcherNotConfigured
+	}
 	if batchSize <= 0 {
 		batchSize = 50
 	}
@@ -147,23 +136,17 @@ func (s *outboxService) ProcessBatch(
 		if dispatchErr != nil {
 			metrics.RecordOutboxEvent("failed")
 			slog.ErrorContext(ctx, "outbox_dispatch_failed",
+				slog.String("component", "outbox"), slog.String("operation", "dispatch"), slog.String("request_id", logger.GetRequestID(ctx)),
 				slog.String("event_id", event.ID),
-				slog.String("event_type", event.EventType),
-				slog.Any("error", dispatchErr),
+				slog.String("reason", "delivery_failed"),
 			)
-			if markErr := s.repo.MarkFailed(ctx, event.ID, dispatchErr.Error()); markErr != nil {
-				slog.ErrorContext(ctx, "outbox_mark_failed_error",
-					slog.String("event_id", event.ID),
-					slog.Any("error", markErr),
-				)
+			if markErr := s.repo.MarkFailed(ctx, event.ID, "delivery_failed"); markErr != nil {
+				logger.Failure(ctx, "outbox", "mark_failed", markErr)
 			}
 		} else {
 			if markErr := s.repo.MarkPublished(ctx, event.ID); markErr != nil {
 				metrics.RecordOutboxEvent("failed")
-				slog.ErrorContext(ctx, "outbox_mark_published_error",
-					slog.String("event_id", event.ID),
-					slog.Any("error", markErr),
-				)
+				logger.Failure(ctx, "outbox", "mark_published", markErr)
 			} else {
 				metrics.RecordOutboxEvent("dispatched")
 				dispatchedCount++
@@ -178,41 +161,58 @@ func (s *outboxService) StartBackgroundPublisher(
 	ctx context.Context,
 	pollInterval time.Duration,
 ) {
-	if pollInterval <= 0 {
-		pollInterval = 3 * time.Second
+	if s.dispatcher == nil {
+		return
 	}
+	s.startOnce.Do(func() {
+		workerCtx, stop := context.WithCancel(ctx)
+		s.workerMu.Lock()
+		s.workerCancel = stop
+		s.workerMu.Unlock()
+		ctx = workerCtx
+		if pollInterval <= 0 {
+			pollInterval = 3 * time.Second
+		}
 
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		ticker := time.NewTicker(pollInterval)
-		defer ticker.Stop()
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			ticker := time.NewTicker(pollInterval)
+			defer ticker.Stop()
 
-		for {
-			select {
-			case <-s.stopChan:
-				slog.InfoContext(ctx, "outbox_worker_stopping")
-				return
-			case <-ctx.Done():
-				slog.InfoContext(ctx, "outbox_worker_context_cancelled")
-				return
-			case <-ticker.C:
-				processCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-				count, err := s.ProcessBatch(processCtx, 50)
-				cancel()
-				if err != nil {
-					slog.ErrorContext(ctx, "outbox_batch_processing_error", slog.Any("error", err))
-				} else if count > 0 {
-					slog.InfoContext(ctx, "outbox_batch_dispatched", slog.Int("count", count))
+			for {
+				select {
+				case <-s.stopChan:
+					slog.InfoContext(ctx, "outbox_worker_stopping", "component", "outbox", "operation", "worker_stop", "reason", "stopping", "request_id", logger.GetRequestID(ctx))
+					return
+				case <-ctx.Done():
+					slog.InfoContext(ctx, "outbox_worker_context_cancelled", "component", "outbox", "operation", "worker_stop", "reason", "context_canceled", "request_id", logger.GetRequestID(ctx))
+					return
+				case <-ticker.C:
+					processCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+					count, err := s.ProcessBatch(processCtx, 50)
+					cancel()
+					if err != nil {
+						logger.Failure(ctx, "outbox", "process_batch", err)
+					} else if count > 0 {
+						slog.InfoContext(ctx, "outbox_batch_dispatched", "component", "outbox", "operation", "process_batch", "reason", "completed", "request_id", logger.GetRequestID(ctx), "count", count)
+					}
 				}
 			}
-		}
-	}()
-	slog.InfoContext(ctx, "outbox_worker_started", slog.Duration("interval", pollInterval))
+		}()
+		slog.InfoContext(ctx, "outbox_worker_started", "component", "outbox", "operation", "worker_start", "reason", "configured_dispatcher", "request_id", logger.GetRequestID(ctx), "interval", pollInterval)
+	})
 }
 
 func (s *outboxService) Stop() {
-	close(s.stopChan)
+	s.stopOnce.Do(func() {
+		close(s.stopChan)
+		s.workerMu.Lock()
+		if s.workerCancel != nil {
+			s.workerCancel()
+		}
+		s.workerMu.Unlock()
+	})
 	s.wg.Wait()
-	slog.Info("outbox_worker_stopped_cleanly")
+	slog.Info("outbox_worker_stopped_cleanly", "component", "outbox", "operation", "worker_stop", "reason", "completed", "request_id", "")
 }

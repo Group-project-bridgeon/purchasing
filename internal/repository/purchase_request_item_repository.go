@@ -183,11 +183,14 @@ func (r *postgresPurchaseRequestItemRepository) DeletePurchaseRequestItem(
 		return fmt.Errorf("invalid purchase request item id: %w", err)
 	}
 
-	err := r.queries.DeletePurchaseRequestItem(ctx, itemID)
+	rows, err := r.queries.DeletePurchaseRequestItem(ctx, itemID)
 	if err != nil {
 		return fmt.Errorf("delete purchase request item: %w", err)
 	}
 
+	if rows == 0 {
+		return domain.ErrPurchaseRequestNotEditable
+	}
 	return nil
 }
 
@@ -288,6 +291,9 @@ func (r *postgresPurchaseRequestItemRepository) UpdatePurchaseRequestItem(
 		},
 	)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrPurchaseRequestNotEditable
+		}
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf(
 				"purchase request item not found or not editable: %w",

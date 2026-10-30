@@ -22,3 +22,14 @@ coverage.html
 # Temporary files
 tmp/
 *.log
+
+# Local configuration and credentials (keep sanitized examples)
+.env
+.env.*
+!.env.example
+keys/
+certificates/
+*.key
+*.pem
+backups/
+.purchasing-prerequisites-*/

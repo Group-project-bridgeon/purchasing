@@ -161,6 +161,7 @@ func ToPurchaseRequestResponse(
 
 	return dto.CreatePurchaseRequestResponse{
 		PurchaseRequest: dto.PurchaseRequestResponse{
+			ApprovedBy: request.ApprovedBy, ApprovedAt: request.ApprovedAt,
 			ID:            request.ID,
 			RequestNumber: request.RequestNumber,
 			RequestedBy:   request.RequestedBy,

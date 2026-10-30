@@ -33,6 +33,10 @@ const (
 )
 
 type VendorBill struct {
+	ApprovedBy *string
+	ApprovedAt *time.Time
+	CreatedBy  *string
+
 	ID                 string
 	InternalBillNumber string
 	BillNumber         string // Seller's invoice number

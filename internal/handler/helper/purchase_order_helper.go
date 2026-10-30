@@ -209,6 +209,7 @@ func ToPurchaseOrderResponse(
 	order *domain.PurchaseOrder,
 ) dto.PurchaseOrderResponse {
 	return dto.PurchaseOrderResponse{
+		ApprovedBy: order.ApprovedBy, ApprovedAt: order.ApprovedAt, CreatedBy: order.CreatedBy,
 		ID:                   order.ID,
 		PONumber:             order.PONumber,
 		PurchaseRequestID:    order.PurchaseRequestID,

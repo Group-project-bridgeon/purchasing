@@ -619,8 +619,8 @@ func TestAddPurchaseRequestItem_NotDraft(t *testing.T) {
 	_, err := service.AddPurchaseRequestItem(context.Background(), "pr-1", &domain.PurchaseRequestItem{
 		Quantity: decimal.NewFromInt(5),
 	})
-	if err == nil || !strings.Contains(err.Error(), "draft") {
-		t.Fatalf("expected draft status error, got %v", err)
+	if !errors.Is(err, domain.ErrPurchaseRequestNotEditable) {
+		t.Fatal("expected typed draft-only lifecycle rejection")
 	}
 }
 

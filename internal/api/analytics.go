@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -16,8 +17,8 @@ func RegisterAnalyticsRoutes(
 		return
 	}
 
-	r.Get(cfg.VendorScorecard, h.GetVendorScorecard)             // GET /api/v1/analytics/vendors/:vendorId/scorecard
-	r.Get(cfg.VendorPerformance, h.GetVendorPerformanceRankings) // GET /api/v1/analytics/vendors/performance
-	r.Get(cfg.DashboardKPIs, h.GetDashboardKPIs)                 // GET /api/v1/analytics/dashboard/kpis
-	r.Get(cfg.SpendByVendor, h.GetSpendByVendor)                 // GET /api/v1/analytics/spend/by-vendor
+	r.Get(cfg.VendorScorecard, middleware.Require("purchasing.analytics:read"), h.GetVendorScorecard)             // GET /api/v1/analytics/vendors/:vendorId/scorecard
+	r.Get(cfg.VendorPerformance, middleware.Require("purchasing.analytics:read"), h.GetVendorPerformanceRankings) // GET /api/v1/analytics/vendors/performance
+	r.Get(cfg.DashboardKPIs, middleware.Require("purchasing.analytics:read"), h.GetDashboardKPIs)                 // GET /api/v1/analytics/dashboard/kpis
+	r.Get(cfg.SpendByVendor, middleware.Require("purchasing.analytics:read"), h.GetSpendByVendor)                 // GET /api/v1/analytics/spend/by-vendor
 }

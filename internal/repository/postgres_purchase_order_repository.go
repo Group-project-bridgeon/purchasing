@@ -91,6 +91,19 @@ func mapPurchaseOrderToDomain(
 		result.Notes = &notes
 	}
 
+	if po.ApprovedBy.Valid {
+		v := po.ApprovedBy.String()
+		result.ApprovedBy = &v
+	}
+	if po.ApprovedAt.Valid {
+		v := po.ApprovedAt.Time
+		result.ApprovedAt = &v
+	}
+	if po.CreatedBy.Valid {
+		v := po.CreatedBy.String()
+		result.CreatedBy = &v
+	}
+
 	return result, nil
 }
 
@@ -98,6 +111,10 @@ func (r *postgresPurchaseOrderRepository) CreatePurchaseOrder(
 	ctx context.Context,
 	order *domain.PurchaseOrder,
 ) (*domain.PurchaseOrder, error) {
+	verifiedActor, actorErr := requiredActor(ctx)
+	if actorErr != nil {
+		return nil, actorErr
+	}
 	vendorID := pgtype.UUID{}
 	if err := vendorID.Scan(order.VendorID); err != nil {
 		return nil, fmt.Errorf("invalid vendor id: %w", err)
@@ -156,6 +173,7 @@ func (r *postgresPurchaseOrderRepository) CreatePurchaseOrder(
 	created, err := r.queries.CreatePurchaseOrder(
 		ctx,
 		generated.CreatePurchaseOrderParams{
+			CreatedBy:            verifiedActor,
 			PoNumber:             order.PONumber,
 			PurchaseRequestID:    prID,
 			VendorID:             vendorID,
@@ -368,6 +386,9 @@ func (r *postgresPurchaseOrderRepository) UpdatePurchaseOrder(
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
+			return nil, domain.ErrPurchaseOrderNotEditable
+		}
+		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("purchase order not found or not editable: %w", err)
 		}
 		return nil, fmt.Errorf("update purchase order: %w", err)
@@ -386,13 +407,23 @@ func (r *postgresPurchaseOrderRepository) UpdatePurchaseOrderStatus(
 		return nil, fmt.Errorf("invalid purchase order id: %w", err)
 	}
 
-	updated, err := r.queries.UpdatePurchaseOrderStatus(
-		ctx,
-		generated.UpdatePurchaseOrderStatusParams{
-			ID:     poID,
-			Status: string(status),
-		},
-	)
+	var updated generated.PurchaseOrder
+	var err error
+	if status == domain.PurchaseOrderStatusApproved {
+		verifiedActor, actorErr := requiredActor(ctx)
+		if actorErr != nil {
+			return nil, actorErr
+		}
+		updated, err = r.queries.ApprovePurchaseOrder(ctx, generated.ApprovePurchaseOrderParams{ID: poID, ApprovedBy: verifiedActor})
+	} else {
+		updated, err = r.queries.UpdatePurchaseOrderStatus(
+			ctx,
+			generated.UpdatePurchaseOrderStatusParams{
+				ID:     poID,
+				Status: string(status),
+			},
+		)
+	}
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("purchase order not found: %w", err)

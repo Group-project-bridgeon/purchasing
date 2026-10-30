@@ -16,6 +16,9 @@ const (
 )
 
 type PurchaseRequest struct {
+	ApprovedBy *string
+	ApprovedAt *time.Time
+
 	ID            string
 	RequestNumber string
 

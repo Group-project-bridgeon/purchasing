@@ -69,7 +69,7 @@ SET
     tracking_number = $4,
     notes = $5,
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND status = 'draft'
 RETURNING *;
 
 
@@ -136,3 +136,7 @@ FROM purchase_return_items pri
 JOIN purchase_returns pr ON pr.id = pri.purchase_return_id
 WHERE pri.purchase_order_item_id = $1
   AND pr.status IN ('approved', 'shipped', 'completed');
+
+-- name: ApprovePurchaseReturn :one
+UPDATE purchase_returns SET status='approved', approved_by=sqlc.arg(approved_by), approved_at=NOW(), updated_at=NOW()
+WHERE id=sqlc.arg(id) AND status='draft' RETURNING *;

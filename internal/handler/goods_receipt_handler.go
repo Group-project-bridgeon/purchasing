@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"strconv"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -31,10 +32,14 @@ func (h *GoodsReceiptHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.ReceivedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
+
 	input, err := helper.ParseCreateGoodsReceipt(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -43,11 +48,11 @@ func (h *GoodsReceiptHandler) Create(c *fiber.Ctx) error {
 		if errors.Is(err, domain.ErrInvalidPOStatusForReceiving) ||
 			errors.Is(err, domain.ErrExceedsOrderedQuantity) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -67,7 +72,7 @@ func (h *GoodsReceiptHandler) GetByID(c *fiber.Ctx) error {
 	grn, err := h.service.GetGoodsReceiptByID(c.UserContext(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -117,7 +122,7 @@ func (h *GoodsReceiptHandler) List(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -139,7 +144,7 @@ func (h *GoodsReceiptHandler) ListByPO(c *fiber.Ctx) error {
 	receipts, err := h.service.ListGoodsReceiptsByPO(c.UserContext(), poID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -158,11 +163,11 @@ func (h *GoodsReceiptHandler) Cancel(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrGoodsReceiptCannotCancel) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

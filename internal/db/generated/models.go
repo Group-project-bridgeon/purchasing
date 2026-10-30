@@ -68,6 +68,9 @@ type PurchaseOrder struct {
 	Notes                pgtype.Text        `json:"notes"`
 	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy            pgtype.UUID        `json:"created_by"`
+	ApprovedBy           pgtype.UUID        `json:"approved_by"`
+	ApprovedAt           pgtype.Timestamptz `json:"approved_at"`
 }
 
 type PurchaseOrderItem struct {
@@ -96,6 +99,8 @@ type PurchaseRequest struct {
 	Notes         pgtype.Text        `json:"notes"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ApprovedBy    pgtype.UUID        `json:"approved_by"`
+	ApprovedAt    pgtype.Timestamptz `json:"approved_at"`
 }
 
 type PurchaseRequestItem struct {
@@ -124,6 +129,8 @@ type PurchaseReturn struct {
 	Notes             pgtype.Text        `json:"notes"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ApprovedBy        pgtype.UUID        `json:"approved_by"`
+	ApprovedAt        pgtype.Timestamptz `json:"approved_at"`
 }
 
 type PurchaseReturnItem struct {
@@ -185,6 +192,9 @@ type VendorBill struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy          pgtype.UUID        `json:"created_by"`
+	ApprovedBy         pgtype.UUID        `json:"approved_by"`
+	ApprovedAt         pgtype.Timestamptz `json:"approved_at"`
 }
 
 type VendorBillItem struct {

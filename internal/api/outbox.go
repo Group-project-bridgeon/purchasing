@@ -12,11 +12,8 @@ func RegisterOutboxRoutes(
 	h *handler.OutboxHandler,
 	cfg config.OutboxRoutes,
 ) {
+	// Disabled by approved policy; no administration endpoint is registered.
 	if h == nil {
 		return
 	}
-
-	r.Get(cfg.Base, h.List)    // GET  /api/v1/outbox/events
-	r.Get(cfg.ByID, h.GetByID) // GET  /api/v1/outbox/events/:id
-	r.Post(cfg.Retry, h.Retry) // POST /api/v1/outbox/events/:id/retry
 }

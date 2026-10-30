@@ -35,8 +35,8 @@ func TestSetupRouter_SystemEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error on /docs: %v", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 from /docs, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401 from /docs, got %d", resp.StatusCode)
 	}
 
 	// Test 3: OpenAPI spec
@@ -45,8 +45,8 @@ func TestSetupRouter_SystemEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error on /docs/openapi.json: %v", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 from /docs/openapi.json, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401 from /docs/openapi.json, got %d", resp.StatusCode)
 	}
 
 	// Test 4: Prometheus Metrics
@@ -55,8 +55,8 @@ func TestSetupRouter_SystemEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error on /metrics: %v", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 from /metrics, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401 from /metrics, got %d", resp.StatusCode)
 	}
 
 	// Test 5: Double Slash Normalization (e.g. //health)

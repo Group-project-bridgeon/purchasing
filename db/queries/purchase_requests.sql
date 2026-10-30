@@ -79,6 +79,8 @@ RETURNING *;
 UPDATE purchase_requests
 SET
     status = 'approved',
+ approved_by = sqlc.arg(approved_by),
+ approved_at = NOW(),
     updated_at = NOW()
 WHERE id = $1
   AND status = 'submitted'
@@ -142,7 +144,7 @@ WHERE purchase_request_items.id = $1
   )
 RETURNING *;
 
--- name: DeletePurchaseRequestItem :exec
+-- name: DeletePurchaseRequestItem :execrows
 DELETE FROM purchase_request_items
 WHERE purchase_request_items.id = $1
   AND EXISTS (

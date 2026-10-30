@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Group-project-bridgeon/purchasing/internal/actor"
+	"github.com/google/uuid"
 	"testing"
+
+	"github.com/Group-project-bridgeon/purchasing/internal/testfixture"
 	"time"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -12,14 +16,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const testDatabaseURL = "postgres://postgres:postgres@localhost:5433/purchasing?sslmode=disable"
-
 func setupTestDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
-	db, err := pgxpool.New(ctx, testDatabaseURL)
+	db, err := pgxpool.New(ctx, testfixture.URL(t))
 	if err != nil {
 		t.Fatalf("failed to create database pool: %v", err)
 	}
@@ -39,7 +41,7 @@ func setupTestDB(t *testing.T) *pgxpool.Pool {
 func cleanupPurchaseRequests(t *testing.T, db *pgxpool.Pool) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	_, err := db.Exec(
 		ctx,
@@ -56,7 +58,7 @@ func TestPostgresPurchaseRequestRepository_CreatePurchaseRequest(t *testing.T) {
 
 	repo := NewPostgresPurchaseRequestRepository(db)
 
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	requestedBy := "11111111-1111-1111-1111-111111111111"
 	departmentID := "22222222-2222-2222-2222-222222222222"
@@ -125,7 +127,7 @@ func TestPostgresPurchaseRequestRepository_GetPurchaseRequestByID(t *testing.T) 
 
 	repo := NewPostgresPurchaseRequestRepository(db)
 
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-000002",
@@ -169,7 +171,7 @@ func TestPostgresPurchaseRequestRepository_GetPurchaseRequestByNumber(t *testing
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-000003",
@@ -208,7 +210,7 @@ func TestPostgresPurchaseRequestRepository_ListPurchaseRequests(t *testing.T) {
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	for i := 1; i <= 3; i++ {
 		request := &domain.PurchaseRequest{
@@ -244,7 +246,7 @@ func TestPostgresPurchaseRequestRepository_ListPurchaseRequestsByStatus(t *testi
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	for i := 1; i <= 3; i++ {
 		request := &domain.PurchaseRequest{
@@ -304,7 +306,7 @@ func TestPostgresPurchaseRequestRepository_UpdatePurchaseRequest(t *testing.T) {
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-UPDATE-001",
@@ -361,7 +363,7 @@ func TestPostgresPurchaseRequestRepository_SubmitPurchaseRequest(t *testing.T) {
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-SUBMIT-001",
@@ -392,7 +394,7 @@ func TestPostgresPurchaseRequestRepository_ApprovePurchaseRequest(t *testing.T) 
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-APPROVE-001",
@@ -427,7 +429,7 @@ func TestPostgresPurchaseRequestRepository_RejectPurchaseRequest(t *testing.T) {
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-REJECT-001",
@@ -462,7 +464,7 @@ func TestPostgresPurchaseRequestRepository_CannotApproveDraftRequest(t *testing.
 	cleanupPurchaseRequests(t, db)
 
 	repo := NewPostgresPurchaseRequestRepository(db)
-	ctx := context.Background()
+	ctx := actor.WithID(context.Background(), uuid.MustParse("22222222-2222-4222-8222-222222222222"))
 
 	request := &domain.PurchaseRequest{
 		RequestNumber: "PR-TEST-INVALID-001",

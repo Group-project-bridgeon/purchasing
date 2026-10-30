@@ -1,123 +1,38 @@
-name: CI/CD Pipeline
-
+name: Purchasing prerequisites
 on:
   push:
-    branches: [ main, master, develop, 'feature/**' ]
+    branches: [main, master, develop, Development, 'feature/**', 'chore/**']
   pull_request:
-    branches: [ main, master, develop ]
-
+    branches: [main, master, develop, Development]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 env:
-  GO_VERSION: '1.24'
+  GO_VERSION: '1.27.3'
   GOTOOLCHAIN: local
-
+  GOMAXPROCS: '2'
 jobs:
-  # ============================================================================
-  # 1. Code Quality, Formatting & Static Analysis
-  # ============================================================================
-  lint:
-    name: Code Quality & Lint
+  prerequisites:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-
-      - name: Verify Formatting (go fmt)
+      - name: Formatting, static analysis and build
+        shell: bash
         run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "The following files are not formatted:"
-            echo "$unformatted"
-            exit 1
-          fi
-
-      - name: Run Static Analysis (go vet)
-        run: go vet ./...
-
-      - name: Verify Routes Configuration
+          test -z "$(gofmt -l .)"
+          go vet -p=1 ./...
+          go build -p=1 ./...
+      - name: Owned PostgreSQL and application image verification
+        shell: pwsh
+        run: ./scripts/test-platform-prerequisites.ps1 -GoExe go
+      - name: Focused race checks (Linux compiler)
+        run: go test -p=1 -race ./internal/security ./internal/middleware ./internal/service ./internal/app
+      - name: Pinned generated bindings
+        shell: bash
         run: |
-          test -f config/routes.yaml || exit 1
-          test -f internal/config/routes.yaml || exit 1
-
-  # ============================================================================
-  # 2. Automated Test Suite (Unit & Integration Tests)
-  # ============================================================================
-  test:
-    name: Unit & Integration Tests
-    runs-on: ubuntu-latest
-    needs: [lint]
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: purchasing
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d purchasing"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Run Unit Tests with Coverage
-        run: |
-          go test -v -race -coverprofile=coverage.out -covermode=atomic ./internal/service/... ./internal/config/... ./internal/middleware/... ./internal/api/... ./internal/docs/...
-
-      - name: Run Integration Tests
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5433/purchasing?sslmode=disable
-        run: |
-          go test -v -count=1 ./internal/repository/... ./internal/database/...
-
-      - name: Upload Test Coverage Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage.out
-          retention-days: 14
-
-  # ============================================================================
-  # 3. Multi-Stage Docker Container Build
-  # ============================================================================
-  docker:
-    name: Docker Build & Verification
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: purchasing-service:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          docker run --rm --label purchasing.prerequisites.sqlc=ci -v "$PWD:/src" -w /src sqlc/sqlc:1.31.1 generate
+          git diff --exit-code -- internal/db/generated

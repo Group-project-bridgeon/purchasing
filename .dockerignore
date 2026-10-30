@@ -7,3 +7,16 @@ bin/
 tmp/
 .system_generated/
 README.md
+keys/
+certificates/
+*.key
+*.pem
+backups/
+coverage*
+*.test
+*.exe
+.purchasing-prerequisites-*/
+.github/
+.vscode/
+.idea/
+postman/

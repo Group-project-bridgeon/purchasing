@@ -60,6 +60,7 @@ func MapPurchaseReturnToResponse(
 	ret *domain.PurchaseReturn,
 ) dto.PurchaseReturnResponse {
 	return dto.PurchaseReturnResponse{
+		ApprovedBy: ret.ApprovedBy, ApprovedAt: ret.ApprovedAt,
 		ID:                ret.ID,
 		ReturnNumber:      ret.ReturnNumber,
 		PurchaseOrderID:   ret.PurchaseOrderID,

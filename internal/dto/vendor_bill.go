@@ -7,6 +7,7 @@ import (
 )
 
 type CreateVendorBillBody struct {
+	CreatedBy       string                     `json:"created_by,omitempty"`
 	BillNumber      string                     `json:"bill_number"`
 	PurchaseOrderID string                     `json:"purchase_order_id"`
 	BillDate        string                     `json:"bill_date"`
@@ -32,6 +33,10 @@ type UpdateVendorBillBody struct {
 }
 
 type VendorBillResponse struct {
+	ApprovedBy *string    `json:"approved_by"`
+	ApprovedAt *time.Time `json:"approved_at"`
+	CreatedBy  *string    `json:"created_by"`
+
 	ID                 string                 `json:"id"`
 	InternalBillNumber string                 `json:"internal_bill_number"`
 	BillNumber         string                 `json:"bill_number"`

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"strconv"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -31,17 +32,20 @@ func (h *PurchaseOrderHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
 	input, err := helper.ParseCreatePurchaseOrder(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	order, err := h.service.CreatePurchaseOrder(c.UserContext(), input)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -65,17 +69,20 @@ func (h *PurchaseOrderHandler) CreateFromPR(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
 	input, err := helper.ParseConvertPRToPO(&body, prID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	order, err := h.service.CreatePurchaseOrderFromPR(c.UserContext(), input)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -95,7 +102,7 @@ func (h *PurchaseOrderHandler) GetByID(c *fiber.Ctx) error {
 	order, err := h.service.GetPurchaseOrderByID(c.UserContext(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -149,7 +156,7 @@ func (h *PurchaseOrderHandler) List(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -178,7 +185,7 @@ func (h *PurchaseOrderHandler) Update(c *fiber.Ctx) error {
 	order, err := helper.ParseUpdatePurchaseOrder(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -187,7 +194,7 @@ func (h *PurchaseOrderHandler) Update(c *fiber.Ctx) error {
 	updatedOrder, err := h.service.UpdatePurchaseOrder(c.UserContext(), order)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -208,11 +215,11 @@ func (h *PurchaseOrderHandler) Approve(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrPurchaseOrderCannotApprove) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -233,11 +240,11 @@ func (h *PurchaseOrderHandler) Issue(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrPurchaseOrderCannotIssue) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -258,11 +265,11 @@ func (h *PurchaseOrderHandler) Cancel(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrPurchaseOrderCannotCancel) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -282,7 +289,7 @@ func (h *PurchaseOrderHandler) GetItems(c *fiber.Ctx) error {
 	items, err := h.service.GetPurchaseOrderItems(c.UserContext(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -307,14 +314,14 @@ func (h *PurchaseOrderHandler) AddItem(c *fiber.Ctx) error {
 	item, err := helper.ParseCreatePurchaseOrderItem(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	createdItem, err := h.service.AddPurchaseOrderItem(c.UserContext(), id, item)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -335,7 +342,7 @@ func (h *PurchaseOrderHandler) UpdateItem(c *fiber.Ctx) error {
 	item, err := helper.ParseUpdatePurchaseOrderItem(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -345,7 +352,7 @@ func (h *PurchaseOrderHandler) UpdateItem(c *fiber.Ctx) error {
 	updatedItem, err := h.service.UpdatePurchaseOrderItem(c.UserContext(), item)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -357,7 +364,7 @@ func (h *PurchaseOrderHandler) DeleteItem(c *fiber.Ctx) error {
 
 	if err := h.service.DeletePurchaseOrderItem(c.UserContext(), itemID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

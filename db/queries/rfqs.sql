@@ -56,7 +56,7 @@ SET
     submission_deadline = $3,
     notes = $4,
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND status = 'draft'
 RETURNING *;
 
 

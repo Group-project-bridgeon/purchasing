@@ -37,6 +37,9 @@ type UpdatePurchaseReturnBody struct {
 }
 
 type PurchaseReturnResponse struct {
+	ApprovedBy *string    `json:"approved_by"`
+	ApprovedAt *time.Time `json:"approved_at"`
+
 	ID                string                      `json:"id"`
 	ReturnNumber      string                      `json:"return_number"`
 	PurchaseOrderID   string                      `json:"purchase_order_id"`

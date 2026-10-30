@@ -308,10 +308,7 @@ func (s *purchaseRequestService) UpdatePurchaseRequest(
 	}
 
 	if current.Status != domain.PurchaseRequestStatusDraft {
-		return nil, fmt.Errorf(
-			"purchase request cannot be updated in status %q",
-			current.Status,
-		)
+		return nil, domain.ErrPurchaseRequestNotEditable
 	}
 
 	return s.repository.UpdatePurchaseRequest(
@@ -405,7 +402,7 @@ func (s *purchaseRequestService) AddPurchaseRequestItem(
 	}
 
 	if current.Status != domain.PurchaseRequestStatusDraft {
-		return nil, fmt.Errorf("purchase request item can only be added to a draft request")
+		return nil, domain.ErrPurchaseRequestNotEditable
 	}
 
 	itemCopy := *item

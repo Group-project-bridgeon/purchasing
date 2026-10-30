@@ -11,6 +11,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const approveVendorBill = `-- name: ApproveVendorBill :one
+UPDATE vendor_bills SET status='approved', approved_by=$1, approved_at=NOW(), updated_at=NOW()
+WHERE id=$2 AND status='draft' AND match_status='matched' RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
+`
+
+type ApproveVendorBillParams struct {
+	ApprovedBy pgtype.UUID `json:"approved_by"`
+	ID         pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) ApproveVendorBill(ctx context.Context, arg ApproveVendorBillParams) (VendorBill, error) {
+	row := q.db.QueryRow(ctx, approveVendorBill, arg.ApprovedBy, arg.ID)
+	var i VendorBill
+	err := row.Scan(
+		&i.ID,
+		&i.InternalBillNumber,
+		&i.BillNumber,
+		&i.PurchaseOrderID,
+		&i.VendorID,
+		&i.BillDate,
+		&i.DueDate,
+		&i.Currency,
+		&i.Subtotal,
+		&i.TaxAmount,
+		&i.TotalAmount,
+		&i.MatchStatus,
+		&i.Status,
+		&i.DiscrepancyReason,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
+	)
+	return i, err
+}
+
 const createVendorBill = `-- name: CreateVendorBill :one
 INSERT INTO vendor_bills (
     internal_bill_number,
@@ -26,7 +64,8 @@ INSERT INTO vendor_bills (
     match_status,
     status,
     discrepancy_reason,
-    notes
+    notes,
+    created_by
 )
 VALUES (
     $1,
@@ -42,9 +81,10 @@ VALUES (
     $11,
     $12,
     $13,
-    $14
+    $14,
+    $15
 )
-RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type CreateVendorBillParams struct {
@@ -62,6 +102,7 @@ type CreateVendorBillParams struct {
 	Status             string         `json:"status"`
 	DiscrepancyReason  pgtype.Text    `json:"discrepancy_reason"`
 	Notes              pgtype.Text    `json:"notes"`
+	CreatedBy          pgtype.UUID    `json:"created_by"`
 }
 
 func (q *Queries) CreateVendorBill(ctx context.Context, arg CreateVendorBillParams) (VendorBill, error) {
@@ -80,6 +121,7 @@ func (q *Queries) CreateVendorBill(ctx context.Context, arg CreateVendorBillPara
 		arg.Status,
 		arg.DiscrepancyReason,
 		arg.Notes,
+		arg.CreatedBy,
 	)
 	var i VendorBill
 	err := row.Scan(
@@ -100,6 +142,9 @@ func (q *Queries) CreateVendorBill(ctx context.Context, arg CreateVendorBillPara
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -177,7 +222,7 @@ func (q *Queries) CreateVendorBillItem(ctx context.Context, arg CreateVendorBill
 }
 
 const getVendorBillByID = `-- name: GetVendorBillByID :one
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE id = $1
 `
@@ -203,12 +248,15 @@ func (q *Queries) GetVendorBillByID(ctx context.Context, id pgtype.UUID) (Vendor
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
 
 const getVendorBillByInternalNumber = `-- name: GetVendorBillByInternalNumber :one
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE internal_bill_number = $1
 `
@@ -234,12 +282,15 @@ func (q *Queries) GetVendorBillByInternalNumber(ctx context.Context, internalBil
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
 
 const getVendorBillByVendorInvoice = `-- name: GetVendorBillByVendorInvoice :one
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE vendor_id = $1
   AND bill_number = $2
@@ -271,6 +322,9 @@ func (q *Queries) GetVendorBillByVendorInvoice(ctx context.Context, arg GetVendo
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -342,7 +396,7 @@ func (q *Queries) GetVendorBillItems(ctx context.Context, vendorBillID pgtype.UU
 }
 
 const listVendorBills = `-- name: ListVendorBills :many
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 ORDER BY bill_date DESC
 LIMIT $1
@@ -381,6 +435,9 @@ func (q *Queries) ListVendorBills(ctx context.Context, arg ListVendorBillsParams
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -393,7 +450,7 @@ func (q *Queries) ListVendorBills(ctx context.Context, arg ListVendorBillsParams
 }
 
 const listVendorBillsByMatchStatus = `-- name: ListVendorBillsByMatchStatus :many
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE match_status = $1
 ORDER BY bill_date DESC
@@ -434,6 +491,9 @@ func (q *Queries) ListVendorBillsByMatchStatus(ctx context.Context, arg ListVend
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -446,7 +506,7 @@ func (q *Queries) ListVendorBillsByMatchStatus(ctx context.Context, arg ListVend
 }
 
 const listVendorBillsByPO = `-- name: ListVendorBillsByPO :many
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE purchase_order_id = $1
 ORDER BY bill_date DESC
@@ -479,6 +539,9 @@ func (q *Queries) ListVendorBillsByPO(ctx context.Context, purchaseOrderID pgtyp
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -491,7 +554,7 @@ func (q *Queries) ListVendorBillsByPO(ctx context.Context, purchaseOrderID pgtyp
 }
 
 const listVendorBillsByStatus = `-- name: ListVendorBillsByStatus :many
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE status = $1
 ORDER BY bill_date DESC
@@ -532,6 +595,9 @@ func (q *Queries) ListVendorBillsByStatus(ctx context.Context, arg ListVendorBil
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -544,7 +610,7 @@ func (q *Queries) ListVendorBillsByStatus(ctx context.Context, arg ListVendorBil
 }
 
 const listVendorBillsByVendor = `-- name: ListVendorBillsByVendor :many
-SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+SELECT id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM vendor_bills
 WHERE vendor_id = $1
 ORDER BY bill_date DESC
@@ -585,6 +651,9 @@ func (q *Queries) ListVendorBillsByVendor(ctx context.Context, arg ListVendorBil
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -609,7 +678,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
   AND status = 'draft'
-RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type UpdateVendorBillParams struct {
@@ -653,6 +722,9 @@ func (q *Queries) UpdateVendorBill(ctx context.Context, arg UpdateVendorBillPara
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -699,7 +771,7 @@ SET
     discrepancy_reason = $3,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type UpdateVendorBillMatchStatusParams struct {
@@ -729,6 +801,9 @@ func (q *Queries) UpdateVendorBillMatchStatus(ctx context.Context, arg UpdateVen
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -739,7 +814,7 @@ SET
     status = $2,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at
+RETURNING id, internal_bill_number, bill_number, purchase_order_id, vendor_id, bill_date, due_date, currency, subtotal, tax_amount, total_amount, match_status, status, discrepancy_reason, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type UpdateVendorBillStatusParams struct {
@@ -768,6 +843,9 @@ func (q *Queries) UpdateVendorBillStatus(ctx context.Context, arg UpdateVendorBi
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }

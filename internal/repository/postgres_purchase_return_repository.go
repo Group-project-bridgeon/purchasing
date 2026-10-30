@@ -76,6 +76,15 @@ func mapPurchaseReturnToDomain(
 		result.Notes = &n
 	}
 
+	if pr.ApprovedBy.Valid {
+		v := pr.ApprovedBy.String()
+		result.ApprovedBy = &v
+	}
+	if pr.ApprovedAt.Valid {
+		v := pr.ApprovedAt.Time
+		result.ApprovedAt = &v
+	}
+
 	return result, nil
 }
 
@@ -338,13 +347,23 @@ func (r *postgresPurchaseReturnRepository) UpdatePurchaseReturnStatus(
 		return nil, fmt.Errorf("invalid purchase return id: %w", err)
 	}
 
-	updated, err := r.queries.UpdatePurchaseReturnStatus(
-		ctx,
-		generated.UpdatePurchaseReturnStatusParams{
-			ID:     returnID,
-			Status: string(status),
-		},
-	)
+	var updated generated.PurchaseReturn
+	var err error
+	if status == domain.PurchaseReturnStatusApproved {
+		verifiedActor, actorErr := requiredActor(ctx)
+		if actorErr != nil {
+			return nil, actorErr
+		}
+		updated, err = r.queries.ApprovePurchaseReturn(ctx, generated.ApprovePurchaseReturnParams{ID: returnID, ApprovedBy: verifiedActor})
+	} else {
+		updated, err = r.queries.UpdatePurchaseReturnStatus(
+			ctx,
+			generated.UpdatePurchaseReturnStatusParams{
+				ID:     returnID,
+				Status: string(status),
+			},
+		)
+	}
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, domain.ErrPurchaseReturnNotFound

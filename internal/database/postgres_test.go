@@ -3,14 +3,14 @@ package database
 import (
 	"context"
 	"testing"
-)
 
-const testDatabaseURL = "postgres://postgres:postgres@localhost:5433/purchasing?sslmode=disable"
+	"github.com/Group-project-bridgeon/purchasing/internal/testfixture"
+)
 
 func TestNewPostgresPool(t *testing.T) {
 	ctx := context.Background()
 
-	pool, err := NewPostgresPool(ctx, testDatabaseURL)
+	pool, err := NewPostgresPool(ctx, testfixture.URL(t))
 	if err != nil {
 		t.Fatalf("NewPostgresPool() returned error: %v", err)
 	}

@@ -7,6 +7,7 @@ import (
 )
 
 type CreatePurchaseOrderBody struct {
+	CreatedBy            string                        `json:"created_by,omitempty"`
 	PurchaseRequestID    *string                       `json:"purchase_request_id,omitempty"`
 	VendorID             string                        `json:"vendor_id"`
 	ExpectedDeliveryDate *string                       `json:"expected_delivery_date,omitempty"`
@@ -42,6 +43,10 @@ type UpdatePurchaseOrderItemBody struct {
 }
 
 type PurchaseOrderResponse struct {
+	ApprovedBy *string    `json:"approved_by"`
+	ApprovedAt *time.Time `json:"approved_at"`
+	CreatedBy  *string    `json:"created_by"`
+
 	ID                   string                     `json:"id"`
 	PONumber             string                     `json:"po_number"`
 	PurchaseRequestID    *string                    `json:"purchase_request_id,omitempty"`
@@ -85,6 +90,7 @@ type ListPurchaseOrdersResponse struct {
 }
 
 type ConvertPRToPOBody struct {
+	CreatedBy            string  `json:"created_by,omitempty"`
 	VendorID             string  `json:"vendor_id"`
 	ExpectedDeliveryDate *string `json:"expected_delivery_date,omitempty"`
 	Currency             string  `json:"currency,omitempty"`
