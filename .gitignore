@@ -1,0 +1,35 @@
+# Binaries & build artifacts
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts & coverage
+*.test
+*.out
+coverage.html
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+*.log
+
+# Local configuration and credentials (keep sanitized examples)
+.env
+.env.*
+!.env.example
+keys/
+certificates/
+*.key
+*.pem
+backups/
+.purchasing-prerequisites-*/

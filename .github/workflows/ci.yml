@@ -1,0 +1,38 @@
+name: Purchasing prerequisites
+on:
+  push:
+    branches: [main, master, develop, Development, 'feature/**', 'chore/**']
+  pull_request:
+    branches: [main, master, develop, Development]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  GO_VERSION: '1.27.3'
+  GOTOOLCHAIN: local
+  GOMAXPROCS: '2'
+jobs:
+  prerequisites:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Formatting, static analysis and build
+        shell: bash
+        run: |
+          test -z "$(gofmt -l .)"
+          go vet -p=1 ./...
+          go build -p=1 ./...
+      - name: Owned PostgreSQL and application image verification
+        shell: pwsh
+        run: ./scripts/test-platform-prerequisites.ps1 -GoExe go
+      - name: Focused race checks (Linux compiler)
+        run: go test -p=1 -race ./internal/security ./internal/middleware ./internal/service ./internal/app
+      - name: Pinned generated bindings
+        shell: bash
+        run: |
+          docker run --rm --label purchasing.prerequisites.sqlc=ci -v "$PWD:/src" -w /src sqlc/sqlc:1.31.1 generate
+          git diff --exit-code -- internal/db/generated
