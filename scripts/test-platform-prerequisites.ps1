@@ -101,7 +101,7 @@ try{
  Owned $containerID
  $ready=$false
  for($attempt=0;$attempt -lt 60;$attempt++){
-  $null=& $dockerExe exec $containerID pg_isready -U prerequisite_admin -d postgres 2>$null
+  $null=& $dockerExe exec $containerID pg_isready -h 127.0.0.1 -U prerequisite_admin -d postgres 2>$null
   if($LASTEXITCODE -eq 0){$ready=$true;break};Start-Sleep -Milliseconds 500
  }
  if(!$ready){throw 'Owned PostgreSQL readiness timed out'}
