@@ -20,9 +20,10 @@ $password=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::
 $names=@('POSTGRES_PASSWORD','PGPASSWORD','DATABASE_URL','JWT_PUBLIC_KEY_PATH','PURCHASING_TEST_DATABASE_URL','PURCHASING_TEST_RUN_ID','GOMAXPROCS','GOTOOLCHAIN','GOTMPDIR')
 $previous=@{}
 foreach($name in $names){$previous[$name]=[Environment]::GetEnvironmentVariable($name,'Process')}
+$dockerExe=if(Get-Command 'docker.exe' -ErrorAction SilentlyContinue){'docker.exe'}else{'docker'}
 
 function InvokeFixtureDocker([string[]]$Arguments){
- $out=& docker.exe @Arguments 2>&1
+ $out=& $dockerExe @Arguments 2>&1
  if($LASTEXITCODE -ne 0){throw "Owned Docker operation failed: $($Arguments[0]); raw output withheld"}
  return $out
 }
@@ -45,7 +46,7 @@ function Migrate([string]$Source,[string]$DB,[string]$User,[string[]]$Operation,
  Owned $containerID
  if($DB -notin $allowedDatabases){throw 'Refusing an unallowlisted migration target'}
  $migrationArgs=@('run','--rm','--label',"purchasing.prerequisites.fixture=$run",'--network',"container:$containerID",'-e','PGPASSWORD','--mount',"type=bind,src=$Source,dst=/migrations,readonly",'migrate/migrate:v4.18.3','-path=/migrations','-lock-timeout=15',"-database=postgres://${User}@127.0.0.1:5432/${DB}?sslmode=disable&connect_timeout=5&statement_timeout=10000")+$Operation
- $out=& docker.exe @migrationArgs 2>&1
+ $out=& $dockerExe @migrationArgs 2>&1
  $code=$LASTEXITCODE
  if($ExpectFailure){if($code -eq 0){throw 'Populated authority downgrade unexpectedly succeeded'}}elseif($code -ne 0){throw 'Disposable migration failed; raw output withheld'}
 }
@@ -62,7 +63,7 @@ function Snapshot{
 }
 function HTTPStatus([string]$Path){
  Owned $appID
- $out=& docker.exe exec $appID wget -T 3 -S -O /dev/null "http://127.0.0.1:8080$Path" 2>&1
+ $out=& $dockerExe exec $appID wget -T 3 -S -O /dev/null "http://127.0.0.1:8080$Path" 2>&1
  $code=$LASTEXITCODE
  $match=[regex]::Match(([string]::Join("`n",[string[]]@($out))),'HTTP/\S+\s+(\d{3})')
  if(!$match.Success){throw 'Owned image HTTP status unavailable; raw response withheld'}
@@ -90,7 +91,7 @@ try{
  Owned $containerID
  $ready=$false
  for($attempt=0;$attempt -lt 60;$attempt++){
-  $null=& docker.exe exec $containerID pg_isready -U prerequisite_admin -d postgres 2>$null
+  $null=& $dockerExe exec $containerID pg_isready -U prerequisite_admin -d postgres 2>$null
   if($LASTEXITCODE -eq 0){$ready=$true;break};Start-Sleep -Milliseconds 500
  }
  if(!$ready){throw 'Owned PostgreSQL readiness timed out'}
@@ -154,7 +155,7 @@ try{
   foreach($id in $ownedIDs){if($id){Owned $id;InvokeFixtureDocker @('rm','--force',$id)|Out-Null}}
  }catch{$cleanupFailures.Add('Owned container cleanup could not be confirmed')}}
  if($imageWorkStarted){try{
-  $label=& docker.exe image inspect --format '{{index .Config.Labels "purchasing.prerequisites.fixture"}}' $image 2>$null
+  $label=& $dockerExe image inspect --format '{{index .Config.Labels "purchasing.prerequisites.fixture"}}' $image 2>$null
   if($LASTEXITCODE -eq 0){if(([string]$label).Trim() -ne $run){throw 'Image label mismatch'};InvokeFixtureDocker @('image','rm',$image)|Out-Null}
  }catch{$cleanupFailures.Add('Owned image cleanup could not be confirmed')}}
  if(Test-Path -LiteralPath $temporary){
