@@ -27,6 +27,14 @@ function InvokeFixtureDocker([string[]]$Arguments){
  if($LASTEXITCODE -ne 0){throw "Owned Docker operation failed: $($Arguments[0]); raw output withheld"}
  return $out
 }
+function ExtractContainerID($Output){
+ $str=[string]::Join("`n",[string[]]@($Output))
+ $match=[regex]::Match($str,'(?m)^[a-f0-9]{64}\r?$')
+ if($match.Success){return $match.Value.Trim()}
+ $match=[regex]::Match($str,'[a-f0-9]{64}')
+ if($match.Success){return $match.Value.Trim()}
+ throw 'Invalid owned-container identity'
+}
 function Owned([string]$ID){
  if($ID -notmatch '^[a-f0-9]{64}$'){throw 'Invalid owned-container identity'}
  $label=[string](InvokeFixtureDocker @('inspect','--format','{{index .Config.Labels "purchasing.prerequisites.fixture"}}',$ID))
@@ -74,6 +82,8 @@ $before=$null
 $cleanupFailures=[Collections.Generic.List[string]]::new()
 try{
  InvokeFixtureDocker @('version','--format','{{.Server.Version}}')|Out-Null
+ InvokeFixtureDocker @('pull','-q','postgres:17-alpine')|Out-Null
+ InvokeFixtureDocker @('pull','-q','migrate/migrate:v4.18.3')|Out-Null
  if($AuthSource){$AuthSource=(Resolve-Path -LiteralPath $AuthSource).Path;if(!(Test-Path -LiteralPath (Join-Path $AuthSource 'db/migrations/000013_purchasing_permissions.up.sql'))){throw 'Explicit Auth source lacks the reviewed Purchasing permission migration'}}
  $env:GOTOOLCHAIN='go1.27.3';$env:GOMAXPROCS='2'
  $compiler=& $GoExe version 2>&1
@@ -87,7 +97,7 @@ try{
  $env:POSTGRES_PASSWORD=$password;$env:PGPASSWORD=$password
  $resourceWorkStarted=$true
  Write-Host "Starting uniquely labelled tmpfs PostgreSQL fixture"
- $containerID=([string](InvokeFixtureDocker @('run','--detach','--name',$run,'--label',"purchasing.prerequisites.fixture=$run",'--tmpfs','/var/lib/postgresql/data:rw,nosuid,nodev','--publish','127.0.0.1::5432','-e','POSTGRES_USER=prerequisite_admin','-e','POSTGRES_PASSWORD','-e','POSTGRES_DB=postgres','-e','POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256','postgres:17-alpine'))).Trim()
+ $containerID=ExtractContainerID (InvokeFixtureDocker @('run','--detach','--name',$run,'--label',"purchasing.prerequisites.fixture=$run",'--tmpfs','/var/lib/postgresql/data:rw,nosuid,nodev','--publish','127.0.0.1::5432','-e','POSTGRES_USER=prerequisite_admin','-e','POSTGRES_PASSWORD','-e','POSTGRES_DB=postgres','-e','POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256','postgres:17-alpine'))
  Owned $containerID
  $ready=$false
  for($attempt=0;$attempt -lt 60;$attempt++){
@@ -136,7 +146,7 @@ try{
   $rsa=[Security.Cryptography.RSA]::Create(2048)
   try{[IO.File]::WriteAllText((Join-Path $temporary 'public.pem'),$rsa.ExportSubjectPublicKeyInfoPem())}finally{$rsa.Dispose()}
   $env:DATABASE_URL="postgres://purchasing_fixture@127.0.0.1:5432/${database}?sslmode=disable"
-  $appID=([string](InvokeFixtureDocker @('run','--detach','--name',"$run-app",'--label',"purchasing.prerequisites.fixture=$run",'--network',"container:$containerID",'--read-only','--tmpfs','/tmp:rw,nosuid,nodev','--security-opt','no-new-privileges:true','-e','DATABASE_URL','-e','PGPASSWORD','-e','JWT_PUBLIC_KEY_PATH=/run/fixture/public.pem','-e','APP_ENV=production','-e','LOG_FORMAT=json','--mount',"type=bind,src=$temporary/public.pem,dst=/run/fixture/public.pem,readonly",$image))).Trim()
+  $appID=ExtractContainerID (InvokeFixtureDocker @('run','--detach','--name',"$run-app",'--label',"purchasing.prerequisites.fixture=$run",'--network',"container:$containerID",'--read-only','--tmpfs','/tmp:rw,nosuid,nodev','--security-opt','no-new-privileges:true','-e','DATABASE_URL','-e','PGPASSWORD','-e','JWT_PUBLIC_KEY_PATH=/run/fixture/public.pem','-e','APP_ENV=production','-e','LOG_FORMAT=json','--mount',"type=bind,src=$temporary/public.pem,dst=/run/fixture/public.pem,readonly",$image))
   Owned $appID
   $imageReady=$false
   for($attempt=0;$attempt -lt 60;$attempt++){try{if((HTTPStatus '/ready') -eq 200){$imageReady=$true;break}}catch{};Start-Sleep -Milliseconds 500}
