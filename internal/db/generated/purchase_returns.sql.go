@@ -11,6 +11,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const approvePurchaseReturn = `-- name: ApprovePurchaseReturn :one
+UPDATE purchase_returns SET status='approved', approved_by=$1, approved_at=NOW(), updated_at=NOW()
+WHERE id=$2 AND status='draft' RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
+`
+
+type ApprovePurchaseReturnParams struct {
+	ApprovedBy pgtype.UUID `json:"approved_by"`
+	ID         pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) ApprovePurchaseReturn(ctx context.Context, arg ApprovePurchaseReturnParams) (PurchaseReturn, error) {
+	row := q.db.QueryRow(ctx, approvePurchaseReturn, arg.ApprovedBy, arg.ID)
+	var i PurchaseReturn
+	err := row.Scan(
+		&i.ID,
+		&i.ReturnNumber,
+		&i.PurchaseOrderID,
+		&i.GoodsReceiptID,
+		&i.VendorID,
+		&i.Status,
+		&i.ReturnDate,
+		&i.TotalReturnAmount,
+		&i.Reason,
+		&i.Carrier,
+		&i.TrackingNumber,
+		&i.CreatedBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
+	)
+	return i, err
+}
+
 const countPurchaseReturns = `-- name: CountPurchaseReturns :one
 SELECT count(*)
 FROM purchase_returns
@@ -61,7 +96,7 @@ VALUES (
     $11,
     $12
 )
-RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type CreatePurchaseReturnParams struct {
@@ -111,6 +146,8 @@ func (q *Queries) CreatePurchaseReturn(ctx context.Context, arg CreatePurchaseRe
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -178,7 +215,7 @@ func (q *Queries) CreatePurchaseReturnItem(ctx context.Context, arg CreatePurcha
 }
 
 const getPurchaseReturnByID = `-- name: GetPurchaseReturnByID :one
-SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_returns
 WHERE id = $1
 `
@@ -202,12 +239,14 @@ func (q *Queries) GetPurchaseReturnByID(ctx context.Context, id pgtype.UUID) (Pu
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
 
 const getPurchaseReturnByNumber = `-- name: GetPurchaseReturnByNumber :one
-SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_returns
 WHERE return_number = $1
 `
@@ -231,6 +270,8 @@ func (q *Queries) GetPurchaseReturnByNumber(ctx context.Context, returnNumber st
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -313,7 +354,7 @@ func (q *Queries) GetTotalReturnedQuantityForPOItem(ctx context.Context, purchas
 }
 
 const listPurchaseReturns = `-- name: ListPurchaseReturns :many
-SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+SELECT id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_returns
 WHERE ($1::uuid IS NULL OR purchase_order_id = $1)
   AND ($2::uuid IS NULL OR vendor_id = $2)
@@ -362,6 +403,8 @@ func (q *Queries) ListPurchaseReturns(ctx context.Context, arg ListPurchaseRetur
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -381,7 +424,7 @@ SET
     tracking_number = $3,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type ShipPurchaseReturnParams struct {
@@ -409,6 +452,8 @@ func (q *Queries) ShipPurchaseReturn(ctx context.Context, arg ShipPurchaseReturn
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -421,8 +466,8 @@ SET
     tracking_number = $4,
     notes = $5,
     updated_at = NOW()
-WHERE id = $1
-RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+WHERE id = $1 AND status = 'draft'
+RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type UpdatePurchaseReturnParams struct {
@@ -458,6 +503,8 @@ func (q *Queries) UpdatePurchaseReturn(ctx context.Context, arg UpdatePurchaseRe
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -468,7 +515,7 @@ SET
     status = $2,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at
+RETURNING id, return_number, purchase_order_id, goods_receipt_id, vendor_id, status, return_date, total_return_amount, reason, carrier, tracking_number, created_by, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type UpdatePurchaseReturnStatusParams struct {
@@ -495,6 +542,8 @@ func (q *Queries) UpdatePurchaseReturnStatus(ctx context.Context, arg UpdatePurc
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }

@@ -362,11 +362,8 @@ func TestPostgresPurchaseRequestItemRepository_CannotUpdateSubmittedRequestItem(
 		t.Fatal("expected error when updating item of submitted request")
 	}
 
-	if !errors.Is(err, pgx.ErrNoRows) {
-		t.Fatalf(
-			"expected pgx.ErrNoRows, got %v",
-			err,
-		)
+	if !errors.Is(err, domain.ErrPurchaseRequestNotEditable) {
+		t.Fatal("expected explicit non-draft lifecycle rejection")
 	}
 }
 
@@ -407,12 +404,11 @@ func TestPostgresPurchaseRequestItemRepository_CannotDeleteSubmittedRequestItem(
 	}
 
 	err = itemRepo.DeletePurchaseRequestItem(ctx, createdItem.ID)
-	if err != nil {
-		t.Fatalf("expected delete query to execute without error, got %v", err)
+	if !errors.Is(err, domain.ErrPurchaseRequestNotEditable) {
+		t.Fatal("expected explicit non-draft delete rejection")
 	}
 
-	// DeletePurchaseRequestItem uses :exec, so zero affected rows
-	// does not produce pgx.ErrNoRows. Verify the item still exists.
+	// A rejected delete must preserve its item.
 	result, err := itemRepo.GetPurchaseRequestItemByID(
 		ctx,
 		createdItem.ID,

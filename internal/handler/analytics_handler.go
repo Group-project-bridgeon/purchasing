@@ -31,14 +31,14 @@ func (h *AnalyticsHandler) GetVendorScorecard(c *fiber.Ctx) error {
 	fromDate, toDate, err := helper.ParseDateRange(c)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	scorecard, err := h.service.GetVendorScorecard(c.UserContext(), vendorID, fromDate, toDate)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -49,7 +49,7 @@ func (h *AnalyticsHandler) GetVendorPerformanceRankings(c *fiber.Ctx) error {
 	fromDate, toDate, err := helper.ParseDateRange(c)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -59,7 +59,7 @@ func (h *AnalyticsHandler) GetVendorPerformanceRankings(c *fiber.Ctx) error {
 	rankings, total, err := h.service.GetVendorPerformanceRankings(c.UserContext(), fromDate, toDate, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -70,14 +70,14 @@ func (h *AnalyticsHandler) GetDashboardKPIs(c *fiber.Ctx) error {
 	fromDate, toDate, err := helper.ParseDateRange(c)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	kpis, err := h.service.GetDashboardKPIs(c.UserContext(), fromDate, toDate)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -88,7 +88,7 @@ func (h *AnalyticsHandler) GetSpendByVendor(c *fiber.Ctx) error {
 	fromDate, toDate, err := helper.ParseDateRange(c)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -97,7 +97,7 @@ func (h *AnalyticsHandler) GetSpendByVendor(c *fiber.Ctx) error {
 	spend, total, err := h.service.GetSpendByVendor(c.UserContext(), fromDate, toDate, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

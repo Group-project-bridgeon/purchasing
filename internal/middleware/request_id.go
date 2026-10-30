@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"regexp"
 )
 
 const (
@@ -10,11 +11,13 @@ const (
 	LocalsRequestID  = "requestId"
 )
 
+var validRequestID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
+
 // RequestID attaches or propagates a unique correlation ID across requests.
 func RequestID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		reqID := c.Get(HeaderXRequestID)
-		if reqID == "" {
+		if !validRequestID.MatchString(reqID) || len(c.Request().Header.PeekAll(HeaderXRequestID)) != 1 {
 			reqID = uuid.New().String()
 		}
 

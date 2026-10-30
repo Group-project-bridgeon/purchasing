@@ -87,6 +87,7 @@ func ToVendorBillResponse(
 	bill *domain.VendorBill,
 ) dto.VendorBillResponse {
 	return dto.VendorBillResponse{
+		ApprovedBy: bill.ApprovedBy, ApprovedAt: bill.ApprovedAt, CreatedBy: bill.CreatedBy,
 		ID:                 bill.ID,
 		InternalBillNumber: bill.InternalBillNumber,
 		BillNumber:         bill.BillNumber,

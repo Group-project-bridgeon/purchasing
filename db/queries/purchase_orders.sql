@@ -12,7 +12,8 @@ INSERT INTO purchase_orders (
     total_amount,
     payment_terms,
     shipping_address,
-    notes
+    notes,
+    created_by
 )
 VALUES (
     $1,
@@ -27,7 +28,8 @@ VALUES (
     $9,
     $10,
     $11,
-    $12
+    $12,
+    sqlc.arg(created_by)
 )
 RETURNING *;
 
@@ -150,7 +152,7 @@ WHERE purchase_order_items.id = $1
 RETURNING *;
 
 
--- name: DeletePurchaseOrderItem :exec
+-- name: DeletePurchaseOrderItem :execrows
 DELETE FROM purchase_order_items
 WHERE purchase_order_items.id = $1
   AND EXISTS (
@@ -168,3 +170,7 @@ SET
     billed_quantity = $3
 WHERE id = $1
 RETURNING *;
+
+-- name: ApprovePurchaseOrder :one
+UPDATE purchase_orders SET status='approved', approved_by=sqlc.arg(approved_by), approved_at=NOW(), updated_at=NOW()
+WHERE id=sqlc.arg(id) AND status IN('draft','pending_approval') RETURNING *;

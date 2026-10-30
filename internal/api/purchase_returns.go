@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -16,13 +17,13 @@ func RegisterPurchaseReturnRoutes(
 		return
 	}
 
-	r.Post(cfg.Base, h.Create)         // POST /api/v1/purchase-returns
-	r.Get(cfg.Base, h.List)            // GET  /api/v1/purchase-returns
-	r.Get(cfg.ByID, h.GetByID)         // GET  /api/v1/purchase-returns/:id
-	r.Get(cfg.ByNumber, h.GetByNumber) // GET  /api/v1/purchase-returns/number/:returnNumber
-	r.Put(cfg.ByID, h.Update)          // PUT  /api/v1/purchase-returns/:id
-	r.Post(cfg.Approve, h.Approve)     // POST /api/v1/purchase-returns/:id/approve
-	r.Post(cfg.Ship, h.Ship)           // POST /api/v1/purchase-returns/:id/ship
-	r.Post(cfg.Complete, h.Complete)   // POST /api/v1/purchase-returns/:id/complete
-	r.Post(cfg.Cancel, h.Cancel)       // POST /api/v1/purchase-returns/:id/cancel
+	r.Post(cfg.Base, middleware.Require("purchasing.purchase-returns:create"), h.Create)         // POST /api/v1/purchase-returns
+	r.Get(cfg.Base, middleware.Require("purchasing.purchase-returns:read"), h.List)              // GET  /api/v1/purchase-returns
+	r.Get(cfg.ByID, middleware.Require("purchasing.purchase-returns:read"), h.GetByID)           // GET  /api/v1/purchase-returns/:id
+	r.Get(cfg.ByNumber, middleware.Require("purchasing.purchase-returns:read"), h.GetByNumber)   // GET  /api/v1/purchase-returns/number/:returnNumber
+	r.Put(cfg.ByID, middleware.Require("purchasing.purchase-returns:update"), h.Update)          // PUT  /api/v1/purchase-returns/:id
+	r.Post(cfg.Approve, middleware.Require("purchasing.purchase-returns:approve"), h.Approve)    // POST /api/v1/purchase-returns/:id/approve
+	r.Post(cfg.Ship, middleware.Require("purchasing.purchase-returns:ship"), h.Ship)             // POST /api/v1/purchase-returns/:id/ship
+	r.Post(cfg.Complete, middleware.Require("purchasing.purchase-returns:complete"), h.Complete) // POST /api/v1/purchase-returns/:id/complete
+	r.Post(cfg.Cancel, middleware.Require("purchasing.purchase-returns:cancel"), h.Cancel)       // POST /api/v1/purchase-returns/:id/cancel
 }

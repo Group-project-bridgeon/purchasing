@@ -15,14 +15,21 @@ const approvePurchaseRequest = `-- name: ApprovePurchaseRequest :one
 UPDATE purchase_requests
 SET
     status = 'approved',
+ approved_by = $2,
+ approved_at = NOW(),
     updated_at = NOW()
 WHERE id = $1
   AND status = 'submitted'
-RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 `
 
-func (q *Queries) ApprovePurchaseRequest(ctx context.Context, id pgtype.UUID) (PurchaseRequest, error) {
-	row := q.db.QueryRow(ctx, approvePurchaseRequest, id)
+type ApprovePurchaseRequestParams struct {
+	ID         pgtype.UUID `json:"id"`
+	ApprovedBy pgtype.UUID `json:"approved_by"`
+}
+
+func (q *Queries) ApprovePurchaseRequest(ctx context.Context, arg ApprovePurchaseRequestParams) (PurchaseRequest, error) {
+	row := q.db.QueryRow(ctx, approvePurchaseRequest, arg.ID, arg.ApprovedBy)
 	var i PurchaseRequest
 	err := row.Scan(
 		&i.ID,
@@ -36,6 +43,8 @@ func (q *Queries) ApprovePurchaseRequest(ctx context.Context, id pgtype.UUID) (P
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -61,7 +70,7 @@ VALUES (
     $6,
     $7
 )
-RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type CreatePurchaseRequestParams struct {
@@ -97,6 +106,8 @@ func (q *Queries) CreatePurchaseRequest(ctx context.Context, arg CreatePurchaseR
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -148,7 +159,7 @@ func (q *Queries) CreatePurchaseRequestItem(ctx context.Context, arg CreatePurch
 	return i, err
 }
 
-const deletePurchaseRequestItem = `-- name: DeletePurchaseRequestItem :exec
+const deletePurchaseRequestItem = `-- name: DeletePurchaseRequestItem :execrows
 DELETE FROM purchase_request_items
 WHERE purchase_request_items.id = $1
   AND EXISTS (
@@ -159,13 +170,16 @@ WHERE purchase_request_items.id = $1
   )
 `
 
-func (q *Queries) DeletePurchaseRequestItem(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deletePurchaseRequestItem, id)
-	return err
+func (q *Queries) DeletePurchaseRequestItem(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePurchaseRequestItem, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getPurchaseRequestByID = `-- name: GetPurchaseRequestByID :one
-SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_requests
 WHERE id = $1
 `
@@ -185,12 +199,14 @@ func (q *Queries) GetPurchaseRequestByID(ctx context.Context, id pgtype.UUID) (P
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
 
 const getPurchaseRequestByNumber = `-- name: GetPurchaseRequestByNumber :one
-SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_requests
 WHERE request_number = $1
 `
@@ -210,6 +226,8 @@ func (q *Queries) GetPurchaseRequestByNumber(ctx context.Context, requestNumber 
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -271,7 +289,7 @@ func (q *Queries) GetPurchaseRequestItems(ctx context.Context, purchaseRequestID
 }
 
 const listPurchaseRequests = `-- name: ListPurchaseRequests :many
-SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_requests
 ORDER BY created_at DESC
 LIMIT $1
@@ -304,6 +322,8 @@ func (q *Queries) ListPurchaseRequests(ctx context.Context, arg ListPurchaseRequ
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -316,7 +336,7 @@ func (q *Queries) ListPurchaseRequests(ctx context.Context, arg ListPurchaseRequ
 }
 
 const listPurchaseRequestsByStatus = `-- name: ListPurchaseRequestsByStatus :many
-SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+SELECT id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 FROM purchase_requests
 WHERE status = $1
 ORDER BY created_at DESC
@@ -351,6 +371,8 @@ func (q *Queries) ListPurchaseRequestsByStatus(ctx context.Context, arg ListPurc
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -398,7 +420,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
   AND status = 'submitted'
-RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 `
 
 func (q *Queries) RejectPurchaseRequest(ctx context.Context, id pgtype.UUID) (PurchaseRequest, error) {
@@ -416,6 +438,8 @@ func (q *Queries) RejectPurchaseRequest(ctx context.Context, id pgtype.UUID) (Pu
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -428,7 +452,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
   AND status = 'draft'
-RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 `
 
 func (q *Queries) SubmitPurchaseRequest(ctx context.Context, id pgtype.UUID) (PurchaseRequest, error) {
@@ -446,6 +470,8 @@ func (q *Queries) SubmitPurchaseRequest(ctx context.Context, id pgtype.UUID) (Pu
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -459,7 +485,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
   AND status = 'draft'
-RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at
+RETURNING id, request_number, requested_by, department_id, status, requested_at, required_by, purpose, notes, created_at, updated_at, approved_by, approved_at
 `
 
 type UpdatePurchaseRequestParams struct {
@@ -489,6 +515,8 @@ func (q *Queries) UpdatePurchaseRequest(ctx context.Context, arg UpdatePurchaseR
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }

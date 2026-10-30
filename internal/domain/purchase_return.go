@@ -17,6 +17,9 @@ const (
 )
 
 type PurchaseReturn struct {
+	ApprovedBy *string
+	ApprovedAt *time.Time
+
 	ID                string
 	ReturnNumber      string
 	PurchaseOrderID   string

@@ -414,7 +414,7 @@ func (s *purchaseOrderService) UpdatePurchaseOrder(
 	}
 
 	if current.Status != domain.PurchaseOrderStatusDraft {
-		return nil, fmt.Errorf("purchase order cannot be updated in status %q", current.Status)
+		return nil, domain.ErrPurchaseOrderNotEditable
 	}
 
 	return s.repository.UpdatePurchaseOrder(ctx, order)
@@ -523,7 +523,7 @@ func (s *purchaseOrderService) AddPurchaseOrderItem(
 	}
 
 	if current.Status != domain.PurchaseOrderStatusDraft {
-		return nil, fmt.Errorf("purchase order item can only be added to a draft order")
+		return nil, domain.ErrPurchaseOrderNotEditable
 	}
 
 	lineSubtotal := item.Quantity.Mul(item.UnitPrice).Round(2)

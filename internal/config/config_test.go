@@ -5,6 +5,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
+	t.Setenv("JWT_PUBLIC_KEY_PATH", "synthetic-public-key.pem")
 	t.Setenv(
 		"DATABASE_URL",
 		"postgres://postgres:postgres@localhost:5433/purchasing?sslmode=disable",
@@ -30,8 +31,8 @@ func TestLoad(t *testing.T) {
 	if cfg.LogLevel != "info" {
 		t.Fatalf("expected default log level info, got %s", cfg.LogLevel)
 	}
-	if cfg.LogFormat != "text" {
-		t.Fatalf("expected default dev log format text, got %s", cfg.LogFormat)
+	if cfg.LogFormat != "json" {
+		t.Fatalf("expected default log format json, got %s", cfg.LogFormat)
 	}
 }
 

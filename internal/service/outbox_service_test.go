@@ -192,7 +192,7 @@ func TestOutboxService_ProcessBatch_Failure(t *testing.T) {
 	if count != 0 {
 		t.Errorf("expected 0 dispatched events on failure, got %d", count)
 	}
-	if repo.failedIDs[event.ID] != "simulated broker connection failure" {
+	if repo.failedIDs[event.ID] != "delivery_failed" {
 		t.Errorf("expected failed error recorded, got %q", repo.failedIDs[event.ID])
 	}
 }

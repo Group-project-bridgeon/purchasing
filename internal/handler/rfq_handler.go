@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"strconv"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -31,17 +32,21 @@ func (h *RFQHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
+
 	input, err := helper.ParseCreateRFQ(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	detail, err := h.service.CreateRFQ(c.UserContext(), input)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -63,17 +68,21 @@ func (h *RFQHandler) CreateFromPR(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
+
 	input, err := helper.ParseCreateRFQFromPR(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
 	detail, err := h.service.CreateRFQFromPR(c.UserContext(), prID, input)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -96,7 +105,7 @@ func (h *RFQHandler) GetByID(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -119,7 +128,7 @@ func (h *RFQHandler) GetByNumber(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -144,7 +153,7 @@ func (h *RFQHandler) List(c *fiber.Ctx) error {
 	rfqs, total, err := h.service.ListRFQs(c.UserContext(), status, prID, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -179,7 +188,7 @@ func (h *RFQHandler) Update(c *fiber.Ctx) error {
 	if deadline != nil {
 		t, err := helper.ParseCreateRFQ(&dto.CreateRFQBody{SubmissionDeadline: *deadline})
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": clientError(c, err)})
 		}
 		input.SubmissionDeadline = &t.SubmissionDeadline
 	}
@@ -190,9 +199,9 @@ func (h *RFQHandler) Update(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "rfq not found"})
 		}
 		if errors.Is(err, domain.ErrRFQNotEditable) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapRFQToResponse(updated))
@@ -212,9 +221,9 @@ func (h *RFQHandler) Publish(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "rfq not found"})
 		}
 		if errors.Is(err, domain.ErrRFQCannotPublish) || errors.Is(err, domain.ErrRFQDeadlinePassed) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapRFQToResponse(published))
@@ -234,9 +243,9 @@ func (h *RFQHandler) Close(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "rfq not found"})
 		}
 		if errors.Is(err, domain.ErrRFQCannotClose) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapRFQToResponse(closed))
@@ -256,9 +265,9 @@ func (h *RFQHandler) Cancel(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "rfq not found"})
 		}
 		if errors.Is(err, domain.ErrRFQCannotCancel) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapRFQToResponse(cancelled))
@@ -282,7 +291,7 @@ func (h *RFQHandler) SubmitQuotation(c *fiber.Ctx) error {
 	input, err := helper.ParseSubmitVendorQuotation(&body, rfqID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -294,9 +303,9 @@ func (h *RFQHandler) SubmitQuotation(c *fiber.Ctx) error {
 		if errors.Is(err, domain.ErrRFQNotAcceptingQuotes) ||
 			errors.Is(err, domain.ErrRFQDeadlinePassed) ||
 			errors.Is(err, domain.ErrDuplicateVendorQuotation) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(helper.MapVendorQuotationDetailToResponse(detail))
@@ -315,7 +324,7 @@ func (h *RFQHandler) GetQuotationByID(c *fiber.Ctx) error {
 		if errors.Is(err, domain.ErrQuotationNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "quotation not found"})
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapVendorQuotationDetailToResponse(detail))
@@ -331,7 +340,7 @@ func (h *RFQHandler) ListQuotations(c *fiber.Ctx) error {
 
 	quotations, err := h.service.ListVendorQuotationsByRFQ(c.UserContext(), rfqID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	resp := make([]dto.VendorQuotationResponse, 0, len(quotations))
@@ -352,7 +361,7 @@ func (h *RFQHandler) Compare(c *fiber.Ctx) error {
 
 	matrix, err := h.service.CompareRFQQuotations(c.UserContext(), rfqID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.MapComparisonMatrixToResponse(matrix))
@@ -371,12 +380,12 @@ func (h *RFQHandler) Award(c *fiber.Ctx) error {
 	result, err := h.service.AwardVendorQuotation(c.UserContext(), rfqID, quotationID)
 	if err != nil {
 		if errors.Is(err, domain.ErrRFQNotFound) || errors.Is(err, domain.ErrQuotationNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": clientError(c, err)})
 		}
 		if errors.Is(err, domain.ErrQuotationCannotAward) {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": clientError(c, err)})
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": clientError(c, err)})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(dto.AwardQuotationResponse{

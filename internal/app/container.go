@@ -1,11 +1,17 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"github.com/Group-project-bridgeon/purchasing/internal/api"
 	"github.com/Group-project-bridgeon/purchasing/internal/config"
+	"github.com/Group-project-bridgeon/purchasing/internal/database"
 	"github.com/Group-project-bridgeon/purchasing/internal/handler"
+	"github.com/Group-project-bridgeon/purchasing/internal/logger"
 	"github.com/Group-project-bridgeon/purchasing/internal/metrics"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"github.com/Group-project-bridgeon/purchasing/internal/repository"
+	"github.com/Group-project-bridgeon/purchasing/internal/security"
 	"github.com/Group-project-bridgeon/purchasing/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,7 +32,14 @@ func NewContainer(
 	db *pgxpool.Pool,
 	cfg *config.Config,
 	routesCfg *config.RoutesConfig,
-) *Container {
+) (*Container, error) {
+	verifier, err := security.Load(cfg.JWTPublicKeyPath, cfg.JWTIssuer, cfg.JWTAudience)
+	if err != nil {
+		return nil, errors.New("invalid human JWT configuration")
+	}
+	if cfg.OutboxPublisherEnabled {
+		return nil, service.ErrDispatcherNotConfigured
+	}
 	// -------------------------------------------------------------------------
 	// 1. Repositories & Transaction Managers
 	// -------------------------------------------------------------------------
@@ -138,10 +151,22 @@ func NewContainer(
 
 	app := fiber.New(fiber.Config{
 		AppName:      "ERP Purchasing Microservice",
-		ServerHeader: "Fiber",
+		ServerHeader: "Purchasing",
+		ReadTimeout:  cfg.HTTPReadTimeout, WriteTimeout: cfg.HTTPWriteTimeout, IdleTimeout: cfg.HTTPIdleTimeout, BodyLimit: cfg.HTTPMaxBodyBytes, ErrorHandler: middleware.ErrorHandler, DisableStartupMessage: true,
 	})
 
-	api.SetupRouter(app, handlers, routesCfg)
+	api.SetupRouter(app, handlers, routesCfg, api.RouterOptions{Verifier: verifier, ReadinessTimeout: cfg.ReadinessTimeout, RequestTimeout: cfg.RequestTimeout, Readiness: func(ctx context.Context) error {
+		if db == nil {
+			return database.ErrSchemaNotReady
+		}
+		if err := db.Ping(ctx); err != nil {
+			return err
+		}
+		if err := database.CheckSchema(ctx, db); err != nil {
+			return &logger.StageError{Component: "database", Operation: "readiness_schema", Reason: "schema_not_ready", Err: err}
+		}
+		return nil
+	}})
 
 	return &Container{
 		Config:        cfg,
@@ -150,7 +175,7 @@ func NewContainer(
 		FiberApp:      app,
 		Handlers:      handlers,
 		OutboxService: outboxService,
-	}
+	}, nil
 }
 
 // App returns the configured Fiber HTTP engine ready for listening or testing.

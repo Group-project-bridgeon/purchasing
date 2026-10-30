@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"strconv"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -31,10 +32,13 @@ func (h *VendorBillHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
 	input, err := helper.ParseCreateVendorBill(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -43,11 +47,11 @@ func (h *VendorBillHandler) Create(c *fiber.Ctx) error {
 		if errors.Is(err, domain.ErrDuplicateVendorInvoice) ||
 			errors.Is(err, domain.ErrInvalidPOStatusForBilling) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -67,7 +71,7 @@ func (h *VendorBillHandler) GetByID(c *fiber.Ctx) error {
 	bill, err := h.service.GetVendorBillByID(c.UserContext(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -124,7 +128,7 @@ func (h *VendorBillHandler) List(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -146,7 +150,7 @@ func (h *VendorBillHandler) ListByPO(c *fiber.Ctx) error {
 	bills, err := h.service.ListVendorBillsByPO(c.UserContext(), poID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -164,7 +168,7 @@ func (h *VendorBillHandler) Match(c *fiber.Ctx) error {
 	result, err := h.service.MatchVendorBill(c.UserContext(), id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -178,11 +182,11 @@ func (h *VendorBillHandler) Approve(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrVendorBillCannotApprove) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -203,11 +207,11 @@ func (h *VendorBillHandler) Cancel(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrVendorBillCannotCancel) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

@@ -11,6 +11,43 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const approvePurchaseOrder = `-- name: ApprovePurchaseOrder :one
+UPDATE purchase_orders SET status='approved', approved_by=$1, approved_at=NOW(), updated_at=NOW()
+WHERE id=$2 AND status IN('draft','pending_approval') RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
+`
+
+type ApprovePurchaseOrderParams struct {
+	ApprovedBy pgtype.UUID `json:"approved_by"`
+	ID         pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) ApprovePurchaseOrder(ctx context.Context, arg ApprovePurchaseOrderParams) (PurchaseOrder, error) {
+	row := q.db.QueryRow(ctx, approvePurchaseOrder, arg.ApprovedBy, arg.ID)
+	var i PurchaseOrder
+	err := row.Scan(
+		&i.ID,
+		&i.PoNumber,
+		&i.PurchaseRequestID,
+		&i.VendorID,
+		&i.Status,
+		&i.OrderDate,
+		&i.ExpectedDeliveryDate,
+		&i.Currency,
+		&i.Subtotal,
+		&i.TaxAmount,
+		&i.TotalAmount,
+		&i.PaymentTerms,
+		&i.ShippingAddress,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
+	)
+	return i, err
+}
+
 const createPurchaseOrder = `-- name: CreatePurchaseOrder :one
 INSERT INTO purchase_orders (
     po_number,
@@ -25,7 +62,8 @@ INSERT INTO purchase_orders (
     total_amount,
     payment_terms,
     shipping_address,
-    notes
+    notes,
+    created_by
 )
 VALUES (
     $1,
@@ -40,9 +78,10 @@ VALUES (
     $9,
     $10,
     $11,
-    $12
+    $12,
+    $13
 )
-RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type CreatePurchaseOrderParams struct {
@@ -58,6 +97,7 @@ type CreatePurchaseOrderParams struct {
 	PaymentTerms         pgtype.Text        `json:"payment_terms"`
 	ShippingAddress      pgtype.Text        `json:"shipping_address"`
 	Notes                pgtype.Text        `json:"notes"`
+	CreatedBy            pgtype.UUID        `json:"created_by"`
 }
 
 func (q *Queries) CreatePurchaseOrder(ctx context.Context, arg CreatePurchaseOrderParams) (PurchaseOrder, error) {
@@ -74,6 +114,7 @@ func (q *Queries) CreatePurchaseOrder(ctx context.Context, arg CreatePurchaseOrd
 		arg.PaymentTerms,
 		arg.ShippingAddress,
 		arg.Notes,
+		arg.CreatedBy,
 	)
 	var i PurchaseOrder
 	err := row.Scan(
@@ -93,6 +134,9 @@ func (q *Queries) CreatePurchaseOrder(ctx context.Context, arg CreatePurchaseOrd
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -156,7 +200,7 @@ func (q *Queries) CreatePurchaseOrderItem(ctx context.Context, arg CreatePurchas
 	return i, err
 }
 
-const deletePurchaseOrderItem = `-- name: DeletePurchaseOrderItem :exec
+const deletePurchaseOrderItem = `-- name: DeletePurchaseOrderItem :execrows
 DELETE FROM purchase_order_items
 WHERE purchase_order_items.id = $1
   AND EXISTS (
@@ -167,13 +211,16 @@ WHERE purchase_order_items.id = $1
   )
 `
 
-func (q *Queries) DeletePurchaseOrderItem(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deletePurchaseOrderItem, id)
-	return err
+func (q *Queries) DeletePurchaseOrderItem(ctx context.Context, id pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePurchaseOrderItem, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getPurchaseOrderByID = `-- name: GetPurchaseOrderByID :one
-SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM purchase_orders
 WHERE id = $1
 `
@@ -198,12 +245,15 @@ func (q *Queries) GetPurchaseOrderByID(ctx context.Context, id pgtype.UUID) (Pur
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
 
 const getPurchaseOrderByNumber = `-- name: GetPurchaseOrderByNumber :one
-SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM purchase_orders
 WHERE po_number = $1
 `
@@ -228,6 +278,9 @@ func (q *Queries) GetPurchaseOrderByNumber(ctx context.Context, poNumber string)
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -297,7 +350,7 @@ func (q *Queries) GetPurchaseOrderItems(ctx context.Context, purchaseOrderID pgt
 }
 
 const listPurchaseOrders = `-- name: ListPurchaseOrders :many
-SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM purchase_orders
 ORDER BY created_at DESC
 LIMIT $1
@@ -335,6 +388,9 @@ func (q *Queries) ListPurchaseOrders(ctx context.Context, arg ListPurchaseOrders
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -347,7 +403,7 @@ func (q *Queries) ListPurchaseOrders(ctx context.Context, arg ListPurchaseOrders
 }
 
 const listPurchaseOrdersByStatus = `-- name: ListPurchaseOrdersByStatus :many
-SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM purchase_orders
 WHERE status = $1
 ORDER BY created_at DESC
@@ -387,6 +443,9 @@ func (q *Queries) ListPurchaseOrdersByStatus(ctx context.Context, arg ListPurcha
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -399,7 +458,7 @@ func (q *Queries) ListPurchaseOrdersByStatus(ctx context.Context, arg ListPurcha
 }
 
 const listPurchaseOrdersByVendor = `-- name: ListPurchaseOrdersByVendor :many
-SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+SELECT id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 FROM purchase_orders
 WHERE vendor_id = $1
 ORDER BY created_at DESC
@@ -439,6 +498,9 @@ func (q *Queries) ListPurchaseOrdersByVendor(ctx context.Context, arg ListPurcha
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -464,7 +526,7 @@ SET
     updated_at = NOW()
 WHERE id = $1
   AND status = 'draft'
-RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type UpdatePurchaseOrderParams struct {
@@ -509,6 +571,9 @@ func (q *Queries) UpdatePurchaseOrder(ctx context.Context, arg UpdatePurchaseOrd
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }
@@ -609,7 +674,7 @@ SET
     status = $2,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at
+RETURNING id, po_number, purchase_request_id, vendor_id, status, order_date, expected_delivery_date, currency, subtotal, tax_amount, total_amount, payment_terms, shipping_address, notes, created_at, updated_at, created_by, approved_by, approved_at
 `
 
 type UpdatePurchaseOrderStatusParams struct {
@@ -637,6 +702,9 @@ func (q *Queries) UpdatePurchaseOrderStatus(ctx context.Context, arg UpdatePurch
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
 	)
 	return i, err
 }

@@ -669,3 +669,9 @@ CREATE INDEX idx_outbox_events_aggregate ON public.outbox_events (aggregate_type
 
 \unrestrict IB9bXG7F21xVUTzgcuXFMbUSCBFdd6vcbIeQAWSUJp0tSHBerLiLFZKKqJmnbQr
 
+
+-- Additive authority schema (migration 000009).
+ALTER TABLE purchase_requests ADD COLUMN approved_by UUID, ADD COLUMN approved_at TIMESTAMPTZ;
+ALTER TABLE purchase_orders ADD COLUMN created_by UUID, ADD COLUMN approved_by UUID, ADD COLUMN approved_at TIMESTAMPTZ;
+ALTER TABLE vendor_bills ADD COLUMN created_by UUID, ADD COLUMN approved_by UUID, ADD COLUMN approved_at TIMESTAMPTZ;
+ALTER TABLE purchase_returns ADD COLUMN approved_by UUID, ADD COLUMN approved_at TIMESTAMPTZ;

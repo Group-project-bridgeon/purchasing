@@ -82,6 +82,15 @@ func mapPurchaseRequestToDomain(
 		result.Notes = &notes
 	}
 
+	if request.ApprovedBy.Valid {
+		v := request.ApprovedBy.String()
+		result.ApprovedBy = &v
+	}
+	if request.ApprovedAt.Valid {
+		v := request.ApprovedAt.Time
+		result.ApprovedAt = &v
+	}
+
 	return result
 }
 
@@ -248,6 +257,9 @@ func (r *postgresPurchaseRequestRepository) UpdatePurchaseRequest(
 		},
 	)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrPurchaseRequestNotEditable
+		}
 		return nil, fmt.Errorf("update purchase request: %w", err)
 	}
 
@@ -282,7 +294,11 @@ func (r *postgresPurchaseRequestRepository) ApprovePurchaseRequest(
 		return nil, fmt.Errorf("invalid purchase request id: %w", err)
 	}
 
-	request, err := r.queries.ApprovePurchaseRequest(ctx, requestID)
+	verifiedActor, actorErr := requiredActor(ctx)
+	if actorErr != nil {
+		return nil, actorErr
+	}
+	request, err := r.queries.ApprovePurchaseRequest(ctx, generated.ApprovePurchaseRequestParams{ID: requestID, ApprovedBy: verifiedActor})
 	if err != nil {
 		return nil, fmt.Errorf("approve purchase request: %w", err)
 	}

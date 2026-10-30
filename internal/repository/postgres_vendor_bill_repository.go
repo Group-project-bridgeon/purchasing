@@ -83,6 +83,19 @@ func mapVendorBillToDomain(
 		result.Notes = &n
 	}
 
+	if vb.ApprovedBy.Valid {
+		v := vb.ApprovedBy.String()
+		result.ApprovedBy = &v
+	}
+	if vb.ApprovedAt.Valid {
+		v := vb.ApprovedAt.Time
+		result.ApprovedAt = &v
+	}
+	if vb.CreatedBy.Valid {
+		v := vb.CreatedBy.String()
+		result.CreatedBy = &v
+	}
+
 	return result, nil
 }
 
@@ -90,6 +103,10 @@ func (r *postgresVendorBillRepository) CreateVendorBill(
 	ctx context.Context,
 	bill *domain.VendorBill,
 ) (*domain.VendorBill, error) {
+	verifiedActor, actorErr := requiredActor(ctx)
+	if actorErr != nil {
+		return nil, actorErr
+	}
 	poID := pgtype.UUID{}
 	if err := poID.Scan(bill.PurchaseOrderID); err != nil {
 		return nil, fmt.Errorf("invalid purchase order id: %w", err)
@@ -148,6 +165,7 @@ func (r *postgresVendorBillRepository) CreateVendorBill(
 	created, err := r.queries.CreateVendorBill(
 		ctx,
 		generated.CreateVendorBillParams{
+			CreatedBy:          verifiedActor,
 			InternalBillNumber: bill.InternalBillNumber,
 			BillNumber:         bill.BillNumber,
 			PurchaseOrderID:    poID,
@@ -483,13 +501,23 @@ func (r *postgresVendorBillRepository) UpdateVendorBillStatus(
 		return nil, fmt.Errorf("invalid vendor bill id: %w", err)
 	}
 
-	updated, err := r.queries.UpdateVendorBillStatus(
-		ctx,
-		generated.UpdateVendorBillStatusParams{
-			ID:     billID,
-			Status: string(status),
-		},
-	)
+	var updated generated.VendorBill
+	var err error
+	if status == domain.BillStatusApproved {
+		verifiedActor, actorErr := requiredActor(ctx)
+		if actorErr != nil {
+			return nil, actorErr
+		}
+		updated, err = r.queries.ApproveVendorBill(ctx, generated.ApproveVendorBillParams{ID: billID, ApprovedBy: verifiedActor})
+	} else {
+		updated, err = r.queries.UpdateVendorBillStatus(
+			ctx,
+			generated.UpdateVendorBillStatusParams{
+				ID:     billID,
+				Status: string(status),
+			},
+		)
+	}
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("vendor bill not found: %w", err)

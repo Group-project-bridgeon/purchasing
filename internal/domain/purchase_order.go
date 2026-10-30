@@ -21,6 +21,10 @@ const (
 )
 
 type PurchaseOrder struct {
+	ApprovedBy *string
+	ApprovedAt *time.Time
+	CreatedBy  *string
+
 	ID                   string
 	PONumber             string
 	PurchaseRequestID    *string

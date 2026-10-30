@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/Group-project-bridgeon/purchasing/internal/middleware"
 	"strconv"
 
 	"github.com/Group-project-bridgeon/purchasing/internal/domain"
@@ -31,10 +32,14 @@ func (h *PurchaseReturnHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
+	if actorErr := middleware.BindActor(c, &body.CreatedBy); actorErr != nil {
+		return c.Status(403).JSON(fiber.Map{"error": "actor mismatch"})
+	}
+
 	input, err := helper.ParseCreatePurchaseReturn(&body)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -43,11 +48,11 @@ func (h *PurchaseReturnHandler) Create(c *fiber.Ctx) error {
 		if errors.Is(err, domain.ErrInvalidPOStatusForReturn) ||
 			errors.Is(err, domain.ErrExceedsReturnableQuantity) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -70,7 +75,7 @@ func (h *PurchaseReturnHandler) GetByID(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -93,7 +98,7 @@ func (h *PurchaseReturnHandler) GetByNumber(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -123,7 +128,7 @@ func (h *PurchaseReturnHandler) List(c *fiber.Ctx) error {
 	returns, total, err := h.service.ListPurchaseReturns(c.UserContext(), poID, vendorID, status, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -159,11 +164,11 @@ func (h *PurchaseReturnHandler) Update(c *fiber.Ctx) error {
 		}
 		if errors.Is(err, domain.ErrPurchaseReturnNotEditable) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -187,11 +192,11 @@ func (h *PurchaseReturnHandler) Approve(c *fiber.Ctx) error {
 		}
 		if errors.Is(err, domain.ErrPurchaseReturnCannotApprove) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -222,11 +227,11 @@ func (h *PurchaseReturnHandler) Ship(c *fiber.Ctx) error {
 		}
 		if errors.Is(err, domain.ErrPurchaseReturnCannotShip) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -250,11 +255,11 @@ func (h *PurchaseReturnHandler) Complete(c *fiber.Ctx) error {
 		}
 		if errors.Is(err, domain.ErrPurchaseReturnCannotComplete) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 
@@ -278,11 +283,11 @@ func (h *PurchaseReturnHandler) Cancel(c *fiber.Ctx) error {
 		}
 		if errors.Is(err, domain.ErrPurchaseReturnCannotCancel) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": clientError(c, err),
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": clientError(c, err),
 		})
 	}
 

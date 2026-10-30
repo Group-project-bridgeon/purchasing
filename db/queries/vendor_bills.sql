@@ -13,7 +13,8 @@ INSERT INTO vendor_bills (
     match_status,
     status,
     discrepancy_reason,
-    notes
+    notes,
+    created_by
 )
 VALUES (
     $1,
@@ -29,7 +30,8 @@ VALUES (
     $11,
     $12,
     $13,
-    $14
+    $14,
+    sqlc.arg(created_by)
 )
 RETURNING *;
 
@@ -178,3 +180,7 @@ SET
     match_status = $3
 WHERE id = $1
 RETURNING *;
+
+-- name: ApproveVendorBill :one
+UPDATE vendor_bills SET status='approved', approved_by=sqlc.arg(approved_by), approved_at=NOW(), updated_at=NOW()
+WHERE id=sqlc.arg(id) AND status='draft' AND match_status='matched' RETURNING *;

@@ -29,7 +29,10 @@ func SetupRouter(
 	app *fiber.App,
 	handlers Handlers,
 	routesCfg *config.RoutesConfig,
+	options ...RouterOptions,
 ) {
+	settings := defaultRouterOptions(options)
+	auth := middleware.HumanIdentity(settings.Verifier)
 	// 0. Normalize duplicate slashes (e.g. "//api/v1" -> "/api/v1")
 	app.Use(func(c *fiber.Ctx) error {
 		p := c.Path()
@@ -44,17 +47,21 @@ func SetupRouter(
 
 	// 1. Mount Global Middleware Pipeline
 	app.Use(middleware.RequestID())
+	app.Use(middleware.RequestBounds(settings.RequestTimeout))
 	app.Use(middleware.Metrics())
 	app.Use(middleware.Logger())
 	app.Use(middleware.Recovery())
 	app.Use(middleware.CORS())
 
 	// 2. Mount Documentation, Health & Prometheus Metrics
+	app.Use("/docs", auth, middleware.Require("purchasing.documentation:read"))
+	app.Use("/swagger", auth, middleware.Require("purchasing.documentation:read"))
 	docs.RegisterRoutes(app)
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+	app.Get("/ready", readiness(settings.Readiness, settings.ReadinessTimeout))
+	app.Get("/metrics", auth, middleware.Require("purchasing.metrics:read"), adaptor.HTTPHandler(promhttp.Handler()))
 
 	// 3. Mount API V1 Routes Group
-	v1Group := app.Group(routesCfg.APIPrefix)
+	v1Group := app.Group(routesCfg.APIPrefix, auth)
 
 	RegisterPurchaseRequestRoutes(v1Group, handlers.PurchaseRequest, routesCfg.PurchaseRequests)
 	RegisterPurchaseOrderRoutes(v1Group, handlers.PurchaseOrder, routesCfg.PurchaseOrders)

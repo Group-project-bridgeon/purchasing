@@ -23,6 +23,9 @@ type CreatePurchaseRequestItemBody struct {
 }
 
 type PurchaseRequestResponse struct {
+	ApprovedBy *string    `json:"approved_by"`
+	ApprovedAt *time.Time `json:"approved_at"`
+
 	ID            string                       `json:"id"`
 	RequestNumber string                       `json:"request_number"`
 	RequestedBy   string                       `json:"requested_by"`

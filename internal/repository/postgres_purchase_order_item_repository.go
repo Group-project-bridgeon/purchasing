@@ -246,10 +246,14 @@ func (r *postgresPurchaseOrderItemRepository) DeletePurchaseOrderItem(
 		return fmt.Errorf("invalid purchase order item id: %w", err)
 	}
 
-	if err := r.queries.DeletePurchaseOrderItem(ctx, itemID); err != nil {
+	rows, err := r.queries.DeletePurchaseOrderItem(ctx, itemID)
+	if err != nil {
 		return fmt.Errorf("delete purchase order item: %w", err)
 	}
 
+	if rows == 0 {
+		return domain.ErrPurchaseOrderNotEditable
+	}
 	return nil
 }
 

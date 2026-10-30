@@ -26,7 +26,7 @@ help: ## Display this help screen
 		cp .env.example .env; \
 	fi
 
-run: .env db-wait ## Run service locally (auto-starts PostgreSQL, loads .env)
+run: ## Run with explicit environment, reviewed schema and public verification key
 	go run $(CMD_PATH)
 
 build: ## Build statically linked production binary
@@ -41,7 +41,7 @@ clean: ## Remove build artifacts and test reports
 test: ## Run service unit tests
 	go test -v -count=1 ./internal/service/... ./internal/logger/... ./internal/metrics/... ./internal/middleware/... ./internal/api/... ./internal/config/... ./internal/docs/...
 
-test-all: .env db-wait ## Run all tests including database integration tests
+test-all: ## Run tests; database cases skip without the explicitly owned disposable fixture
 	go test -v -count=1 ./...
 
 test-coverage: ## Run unit tests with HTML coverage report
